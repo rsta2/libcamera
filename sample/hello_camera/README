@@ -1,0 +1,23 @@
+README
+
+This sample program displays a live image from the camera on the screen. Because
+this project is in an early stage, white balancing and auto gain is not
+implemented and the image is not perfect. The program runs for one minute and
+halts then, after showing the frame rate in the log output, which is available
+via the serial interface (GPIO14 at 115200 Bps) only.
+
+You may have to adjust the parameters (image width and height, vertical and
+horizontal flip, exposure, analog and digital gain) in the file kernel.cpp.
+Especially the gain values are important for a good quality image under
+different light conditions. For width and height only the given combinations are
+supported.
+
+On the Raspberry Pi 2 and newer models, it is recommended to create a file
+cmdline.txt on the SD card with this contents:
+
+	fast=true
+
+This enables the full speed of the Raspberry Pi, which is important because the
+image conversion from Bayer (camera) to RGB (display) format is done by the CPU
+and is time consuming. Currently a maximum frame rate of about 12 Hz is possible
+on a Raspberry Pi 3 Model A+ for an 1280x1024 image.
