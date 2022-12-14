@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [[ ! -r  README.md ]]
+then
+	echo "makedoc must be called from project root!"
+	exit 1
+fi
+
+if [[ $1 != clean ]]
+then
+	echo "Generating documentation ..."
+	mkdir doc/
+	doxygen Doxyfile
+
+	if [[ $? == 0 ]]
+	then
+		echo "Open doc/html/index.html in your web browser!"
+	fi
+else
+	echo "Removing documentation ..."
+	rm -rf doc/html/
+	rmdir doc/
+fi

@@ -50,3 +50,12 @@ If you want to try the provided sample program, now go its subdirectory in *samp
 	make
 
 The built kernel image can be installed as described in the main Circle *README.md* file. Please read the file *README* in the subdirectory of the sample for more info!
+
+Documentation
+-------------
+
+If you have Doxygen installed on your computer, you can build the libcamera documentation with:
+
+	./makedoc
+
+Then open the file *doc/html/index.html* in your web browser!
