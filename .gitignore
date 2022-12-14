@@ -1,0 +1,14 @@
+*.o
+*.a
+*.d
+*.elf
+*.lst
+*.img
+*.map
+*.hex
+*.bin
+*.com
+*~
+Config.mk
+.directory
+tmp/
