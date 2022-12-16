@@ -271,13 +271,7 @@ TShutdownMode CKernel::Run (void)
 			}
 
 			// Convert image to RGB565
-			for (unsigned y = 0; y < HEIGHT; y++)
-			{
-				for (unsigned x = 0; x < WIDTH; x++)
-				{
-					pRGBBuffer[y*WIDTH + x] = pBuffer->GetPixelRGB565 (x, y);
-				}
-			}
+			pBuffer->ConvertToRGB565 (pRGBBuffer);
 
 			// Return all buffers
 			while (m_Camera.GetNextBuffer ())

@@ -13,7 +13,11 @@
 
 CCameraBuffer::CCameraBuffer (void)
 :	m_nSize (0),
-	m_pBuffer (nullptr)
+	m_pBuffer (nullptr),
+	m_nWidth (0),
+	m_nHeight (0),
+	m_nBytesPerLine (0),
+	m_Format (CCameraDevice::FormatUnknown)
 {
 }
 
@@ -130,6 +134,23 @@ u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
 
 	// Normally (CG << 5), but to have a 0-31 range for all colors.
 	return (CR << 11) | (CG << 6) | CB;
+}
+
+void CCameraBuffer::ConvertToRGB565 (void *pOutBuffer)
+{
+	assert (m_nWidth);
+	assert (m_nHeight);
+
+	u16 *p = static_cast<u16 *> (pOutBuffer);
+	assert (p);
+
+	for (unsigned y = 0; y < m_nHeight; y++)
+	{
+		for (unsigned x = 0; x < m_nWidth; x++)
+		{
+			*p++ = GetPixelRGB565 (x, y);
+		}
+	}
 }
 
 void CCameraBuffer::InvalidateCache (void)

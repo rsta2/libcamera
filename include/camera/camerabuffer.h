@@ -34,6 +34,8 @@ public:
 
 	u16 GetPixelRGB565 (unsigned x, unsigned y);
 
+	void ConvertToRGB565 (void *pOutBuffer);
+
 	void InvalidateCache (void);
 
 
