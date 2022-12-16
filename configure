@@ -49,6 +49,7 @@ else
 	echo "PREFIX64 = $prefix" >> Config.mk
 fi
 echo "AARCH = $aarch" >> Config.mk
+echo "DEFINE += -DUSE_USB_FIQ" >> Config.mk
 
 echo "circle/Config.mk successfully created:"
 cat Config.mk

@@ -42,10 +42,10 @@ The `configure` command writes a *Config.mk* file for Circle. "4" is the major r
 
 If the build was successful, you find the library file of libcamera in the *lib/* subdirectory with the name *libcamera.a*.
 
-Sample
-------
+Samples
+-------
 
-If you want to try the provided sample program, now go its subdirectory in *sample/hello_camera/* and do:
+If you want to try one of the provided sample programs, now go its subdirectory in *sample/* and do:
 
 	make
 
