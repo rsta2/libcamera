@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: GPL-2.0
 //
 #include "kernel.h"
+#include <camera/camerabuffer.h>
 
 //#define WIDTH		640
 //#define HEIGHT	480
@@ -166,16 +167,12 @@ TShutdownMode CKernel::Run (void)
 			continue;		// No buffer available yet
 		}
 
-		// Get pointer to the (Bayer formatted) image data
-		void *pImage = pBuffer->GetPtr ();
-		assert (pImage);
-
 		// Convert and draw image
 		for (unsigned y = 0; y < nMinHeight; y++)
 		{
 			for (unsigned x = 0; x < nMinWidth; x++)
 			{
-				m_Screen.DrawPixel (x, y, GetColor (x, y, pImage));
+				m_Screen.DrawPixel (x, y, pBuffer->GetPixelRGB565 (x, y));
 			}
 		}
 
@@ -207,58 +204,4 @@ TShutdownMode CKernel::Run (void)
 	m_Screen.UpdateDisplay ();
 
 	return ShutdownHalt;
-}
-
-// This method reads the color values from a captured image in Bayer format
-// (normally 16 bits occupied per value, 10 bits valid) and  returns a RGB565
-// value to be written to the display. The actual Bayer format depends on the
-// v/h-flip control settings.
-TScreenColor CKernel::GetColor (unsigned x, unsigned y, void *pImage)
-{
-	// We ignore the border lines/cols to make the processing more simple.
-	if (   x == 0 || x >= WIDTH-1
-	    || y == 0 || y >= HEIGHT-1)
-	{
-		return BLACK_COLOR;
-	}
-
-	// L(x, y) is the color value captured from the camera at position x/y,
-	// shifted to the range: 0 to 31.
-	typedef TCameraColor TImage[][m_FormatInfo.BytesPerLine / sizeof (TCameraColor)];
-	TImage *p = static_cast<TImage *> (pImage);
-#define L(x, y) ((*(p))[(y)][(x)] >> (CAM_DEPTH - 5))
-
-	u8 CL = L (x, y);
-	u8 CR, CG, CB;
-
-	// For interpolating the missing color values see:
-	// http://siliconimaging.com/RGB%20Bayer.htm
-	switch (CCameraDevice::GetFormatColor (m_FormatInfo.Code, x, y))
-	{
-	case CCameraDevice::R:
-		CR = CL;
-		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
-		CB = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
-		break;
-
-	case CCameraDevice::GR:
-		CR = (L (x-1, y) + L (x+1, y)) / 2;
-		CG = CL;
-		CB = (L (x, y-1) + L (x, y+1)) / 2;
-		break;
-
-	case CCameraDevice::GB:
-		CR = (L (x, y-1) + L (x, y+1)) / 2;
-		CG = CL;
-		CB = (L (x-1, y) + L (x+1, y)) / 2;
-		break;
-
-	case CCameraDevice::B:
-		CR = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
-		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
-		CB = CL;
-		break;
-	}
-
-	return COLOR16 (CR, CG, CB);
 }

@@ -43,8 +43,6 @@ public:
 	TShutdownMode Run (void);
 
 private:
-	TScreenColor GetColor (unsigned x, unsigned y, void *pImage);
-
 	void ControlUpDown (int nUpDown);
 	static void KeyPressedHandler (const char *pString);
 

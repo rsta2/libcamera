@@ -40,9 +40,6 @@ public:
 	TShutdownMode Run (void);
 
 private:
-	TScreenColor GetColor (unsigned x, unsigned y, void *pImage);
-
-private:
 	// do not change this order
 	CActLED			m_ActLED;
 	CKernelOptions		m_Options;

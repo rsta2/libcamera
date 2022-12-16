@@ -10,7 +10,6 @@
 #define _camera_cameradevice_h
 
 #include <camera/cameracontrol.h>
-#include <camera/camerabuffer.h>
 #include <circle/device.h>
 #include <circle/string.h>
 #include <circle/types.h>
@@ -21,6 +20,8 @@
 						  (u16) (bl) << 8  | \
 						  (u16) (br) << 10 | \
 						  (u16) (p)  << 12)
+
+class CCameraBuffer;
 
 /// \note This class defines the camera API.
 

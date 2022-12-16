@@ -23,6 +23,7 @@
  *    Benoit Parrot <bparrot@ti.com>
  */
 #include <camera/csi2cameradevice.h>
+#include <camera/camerabuffer.h>
 #include <circle/bcmpropertytags.h>
 #include <circle/synchronize.h>
 #include <circle/timer.h>
@@ -382,6 +383,9 @@ void CCSI2CameraDevice::InterruptHandler (void)
 		if (m_pCurrentBuffer)
 		{
 			m_pCurrentBuffer->SetSequenceNumber (m_nSequence);
+
+			m_pCurrentBuffer->SetFormat (m_nWidth, m_nHeight, m_nBytesPerLine,
+						     GetLogicalFormat ());
 
 			BufferReady (m_nSequence);
 

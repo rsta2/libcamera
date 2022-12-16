@@ -67,6 +67,71 @@ unsigned CCameraBuffer::GetTimestamp (void) const
 	return m_nTimestamp;
 }
 
+void CCameraBuffer::SetFormat (unsigned nWidth, unsigned nHeight, unsigned nBytesPerLine,
+			       CCameraDevice::TFormatCode Format)
+{
+	m_nWidth = nWidth;
+	m_nHeight = nHeight;
+	m_nBytesPerLine = nBytesPerLine;
+	m_Format = Format;
+}
+
+// This method reads the color values from a captured image in Bayer format
+// (normally 16 bits occupied per value, 10 bits valid) and  returns a RGB565
+// value.
+u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
+{
+	// We ignore the border lines/cols to make the processing more simple.
+	if (   x == 0 || x >= m_nWidth-1
+	    || y == 0 || y >= m_nHeight-1)
+	{
+		return 0;
+	}
+
+	typedef u16 TImage[][m_nBytesPerLine / sizeof (u16)];
+	TImage *p = reinterpret_cast<TImage *> (m_pBuffer);
+
+	unsigned nShift = CCameraDevice::GetFormatDepth (m_Format) - 5;
+
+	// L(x, y) is the color value at position x/y, shifted to the range 0 to 31.
+	#define L(x, y) ((*(p))[(y)][(x)] >> (nShift))
+
+	u8 CL = L (x, y);
+	u8 CR, CG, CB;
+
+	// For interpolating the missing color values see:
+	// http://siliconimaging.com/RGB%20Bayer.htm
+	switch (CCameraDevice::GetFormatColor (m_Format, x, y))
+	{
+	case CCameraDevice::R:
+		CR = CL;
+		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
+		CB = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
+		break;
+
+	case CCameraDevice::GR:
+		CR = (L (x-1, y) + L (x+1, y)) / 2;
+		CG = CL;
+		CB = (L (x, y-1) + L (x, y+1)) / 2;
+		break;
+
+	case CCameraDevice::GB:
+		CR = (L (x, y-1) + L (x, y+1)) / 2;
+		CG = CL;
+		CB = (L (x-1, y) + L (x+1, y)) / 2;
+		break;
+
+	case CCameraDevice::B:
+		CR = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
+		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
+		CB = CL;
+		break;
+	}
+
+	// Normally (CG << 5), but to have a 0-31 range for all colors.
+	return (CR << 11) | (CG << 6) | CB;
+}
+
 void CCameraBuffer::InvalidateCache (void)
 {
 	CleanAndInvalidateDataCacheRange (reinterpret_cast<uintptr> (m_pBuffer), m_nSize);

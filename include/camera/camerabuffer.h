@@ -9,6 +9,7 @@
 #ifndef _camera_camerabuffer_h
 #define _camera_camerabuffer_h
 
+#include <camera/cameradevice.h>
 #include <circle/types.h>
 
 class CCameraBuffer
@@ -28,7 +29,13 @@ public:
 	void SetTimestamp (unsigned nTimestamp);
 	unsigned GetTimestamp (void) const;
 
+	void SetFormat (unsigned nWidth, unsigned nHeight, unsigned nBytesPerLine,
+			CCameraDevice::TFormatCode Format);
+
+	u16 GetPixelRGB565 (unsigned x, unsigned y);
+
 	void InvalidateCache (void);
+
 
 private:
 	size_t m_nSize;
@@ -36,6 +43,11 @@ private:
 
 	unsigned m_nSequence;
 	unsigned m_nTimestamp;
+
+	unsigned m_nWidth;
+	unsigned m_nHeight;
+	unsigned m_nBytesPerLine;
+	CCameraDevice::TFormatCode m_Format;
 };
 
 #endif

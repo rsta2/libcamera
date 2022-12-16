@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: GPL-2.0
 //
 #include "kernel.h"
+#include <camera/camerabuffer.h>
 #include <circle/string.h>
 #include <circle/util.h>
 
@@ -194,10 +195,6 @@ TShutdownMode CKernel::Run (void)
 		}
 		while (!pBuffer);
 
-		// Get pointer to the (Bayer formatted) image data
-		void *pImage = pBuffer->GetPtr ();
-		assert (pImage);
-
 		// Convert and draw preview image
 		static const unsigned nSizeFactor = 10;
 		unsigned x0 = m_Screen.GetWidth () - WIDTH / nSizeFactor;
@@ -206,7 +203,7 @@ TShutdownMode CKernel::Run (void)
 			for (unsigned x = 0; x < WIDTH; x += nSizeFactor)
 			{
 				m_Screen.SetPixel (x0 + x / nSizeFactor, y / nSizeFactor,
-						   GetColor (x, y, pImage));
+						   pBuffer->GetPixelRGB565 (x, y));
 			}
 		}
 
@@ -273,16 +270,12 @@ TShutdownMode CKernel::Run (void)
 				}
 			}
 
-			// Get pointer to the (Bayer formatted) image data
-			void *pImage = pBuffer->GetPtr ();
-			assert (pImage);
-
 			// Convert image to RGB565
 			for (unsigned y = 0; y < HEIGHT; y++)
 			{
 				for (unsigned x = 0; x < WIDTH; x++)
 				{
-					pRGBBuffer[y*WIDTH + x] = GetColor (x, y, pImage);
+					pRGBBuffer[y*WIDTH + x] = pBuffer->GetPixelRGB565 (x, y);
 				}
 			}
 
@@ -349,60 +342,6 @@ TShutdownMode CKernel::Run (void)
 	m_Timer.MsDelay (500);
 
 	return ShutdownReboot;
-}
-
-// This method reads the color values from a captured image in Bayer format
-// (normally 16 bits occupied per value, 10 bits valid) and  returns a RGB565
-// value to be written to the display. The actual Bayer format depends on the
-// v/h-flip control settings.
-TScreenColor CKernel::GetColor (unsigned x, unsigned y, void *pImage)
-{
-	// We ignore the border lines/cols to make the processing more simple.
-	if (   x == 0 || x >= WIDTH-1
-	    || y == 0 || y >= HEIGHT-1)
-	{
-		return BLACK_COLOR;
-	}
-
-	// L(x, y) is the color value captured from the camera at position x/y,
-	// shifted to the range: 0 to 31.
-	typedef TCameraColor TImage[][m_FormatInfo.BytesPerLine / sizeof (TCameraColor)];
-	TImage *p = static_cast<TImage *> (pImage);
-#define L(x, y) ((*(p))[(y)][(x)] >> (CAM_DEPTH - 5))
-
-	u8 CL = L (x, y);
-	u8 CR, CG, CB;
-
-	// For interpolating the missing color values see:
-	// http://siliconimaging.com/RGB%20Bayer.htm
-	switch (CCameraDevice::GetFormatColor (m_FormatInfo.Code, x, y))
-	{
-	case CCameraDevice::R:
-		CR = CL;
-		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
-		CB = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
-		break;
-
-	case CCameraDevice::GR:
-		CR = (L (x-1, y) + L (x+1, y)) / 2;
-		CG = CL;
-		CB = (L (x, y-1) + L (x, y+1)) / 2;
-		break;
-
-	case CCameraDevice::GB:
-		CR = (L (x, y-1) + L (x, y+1)) / 2;
-		CG = CL;
-		CB = (L (x-1, y) + L (x+1, y)) / 2;
-		break;
-
-	case CCameraDevice::B:
-		CR = (L (x-1, y-1) + L (x+1, y-1) + L (x-1, y+1) + L (x+1, y+1)) / 4;
-		CG = (L (x, y-1) + L (x, y+1) + L (x-1, y) + L (x+1, y)) / 4;
-		CB = CL;
-		break;
-	}
-
-	return COLOR16 (CR, CG, CB);
 }
 
 void CKernel::ControlUpDown (int nUpDown)

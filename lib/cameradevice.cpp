@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: GPL-2.0
 //
 #include <camera/cameradevice.h>
+#include <camera/camerabuffer.h>
 #include <circle/atomic.h>
 
 CCameraDevice::CCameraDevice (void)
