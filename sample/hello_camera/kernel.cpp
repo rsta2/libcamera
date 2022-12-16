@@ -41,6 +41,10 @@
 	#error CAM_DEPTH must be 8 or 10!
 #endif
 
+#if DEPTH != 16
+	#error Screen DEPTH must be 16!
+#endif
+
 LOGMODULE ("kernel");
 
 CKernel::CKernel (void)
