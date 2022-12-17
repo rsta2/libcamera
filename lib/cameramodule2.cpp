@@ -24,12 +24,12 @@
  */
 #include <camera/cameramodule2.h>
 #include <circle/bcmpropertytags.h>
+#include <circle/machineinfo.h>
 #include <circle/logger.h>
 #include <circle/timer.h>
 #include <circle/util.h>
 #include <assert.h>
 
-#define IMX219_I2C_MASTER_DEVICE	0
 #define IMX219_I2C_SLAVE_ADDRESS	0x10
 
 #define IMX219_REG_MODE_SELECT		0x0100
@@ -125,8 +125,8 @@ LOGMODULE ("camera2");
 
 CCameraModule2::CCameraModule2 (CInterruptSystem *pInterrupt)
 :	CCSI2CameraDevice (pInterrupt),
-	m_pMachineInfo (GetMachineInfo (CMachineInfo::Get ()->GetMachineModel ())),
-	m_I2CMaster (IMX219_I2C_MASTER_DEVICE, true, m_pMachineInfo->I2CConfig),
+	m_CameraInfo (CMachineInfo::Get ()->GetMachineModel ()),
+	m_I2CMaster (m_CameraInfo.GetI2CDevice (), true, m_CameraInfo.GetI2CConfig ()),
 	m_pMode (nullptr),
 	m_PhysicalFormat (FormatUnknown),
 	m_LogicalFormat (FormatUnknown)
@@ -140,8 +140,7 @@ CCameraModule2::~CCameraModule2 (void)
 
 bool CCameraModule2::Initialize (void)
 {
-	assert (m_pMachineInfo);
-	if (m_pMachineInfo->Model == MachineModelUnknown)
+	if (!m_CameraInfo.IsSupported ())
 	{
 		LOGERR ("Raspberry Pi model not supported");
 
@@ -160,9 +159,10 @@ bool CCameraModule2::Initialize (void)
 		return false;
 	}
 
-	if (m_pMachineInfo->PowerPin < GPIO_PINS)
+	unsigned nPowerPin = m_CameraInfo.GetPowerPin ();
+	if (nPowerPin < GPIO_PINS)
 	{
-		m_PowerGPIOPin.AssignPin (m_pMachineInfo->PowerPin);
+		m_PowerGPIOPin.AssignPin (nPowerPin);
 		m_PowerGPIOPin.SetMode (GPIOModeOutput, false);
 		m_PowerGPIOPin.Write (HIGH);
 	}
@@ -170,7 +170,7 @@ bool CCameraModule2::Initialize (void)
 	{
 		CBcmPropertyTags Tags;
 		TPropertyTagGPIOState GPIOState;
-		GPIOState.nGPIO = m_pMachineInfo->PowerPin;
+		GPIOState.nGPIO = nPowerPin;
 		GPIOState.nState = 1;
 		if (!Tags.GetTag (PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8))
 		{
@@ -581,20 +581,6 @@ bool CCameraModule2::WriteRegs (const TReg *pRegs)
 	return true;
 }
 
-const CCameraModule2::TMachineInfo *CCameraModule2::GetMachineInfo (TMachineModel Model)
-{
-	const TMachineInfo *pInfo;
-	for (pInfo = s_MachineInfo; pInfo->Model != MachineModelUnknown; pInfo++)
-	{
-		if (pInfo->Model == Model)
-		{
-			return pInfo;
-		}
-	}
-
-	return pInfo;
-}
-
 /*
  * The supported formats.
  * This table MUST contain 4 entries per format, to cover the various flip
@@ -939,25 +925,4 @@ const CCameraModule2::TReg CCameraModule2::s_RegsRaw10Frame[] =
 	{0x018d, 0x0a},
 	{0x0309, 0x0a},
 	{0}
-};
-
-const CCameraModule2::TMachineInfo CCameraModule2::s_MachineInfo[] =
-{	// Machine			I2C PWR LED
-	//{MachineModelBRelease1MB256,	0,  27,  5},
-	//{MachineModelBRelease2MB256,	0,  21,  5},
-	{MachineModelBRelease2MB512,	0,  21,  5},
-	{MachineModelAPlus,		1,  41, 32},
-	{MachineModelBPlus,		1,  41, 32},
-	//{MachineModelZero,		1,  41, 32},	// v1.3 only
-	{MachineModelZeroW,		1,  44, 40},
-	{MachineModelZero2W,		2,  40,  0},
-	{MachineModel2B,		1,  41, 32},
-	{MachineModel3B,		2, 133,  0},
-	{MachineModel3APlus,		2, 133,  0},
-	{MachineModel3BPlus,		2, 133,  0},
-	//{MachineModelCM3,		0,   3,  2},	// cam1 only
-	{MachineModel4B,		2, 133,  0},
-	//{MachineModelCM4,		0, 133,  0},	// cam1 only
-
-	{MachineModelUnknown,		0,   0,  0}
 };

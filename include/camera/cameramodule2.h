@@ -11,7 +11,7 @@
 
 #include <camera/csi2cameradevice.h>
 #include <camera/cameracontrol.h>
-#include <circle/machineinfo.h>
+#include <camera/camerainfo.h>
 #include <circle/i2cmaster.h>
 #include <circle/gpiopin.h>
 #include <circle/types.h>
@@ -75,20 +75,8 @@ private:
 		unsigned	 RateFactor;	// relative pixel clock rate factor
 	};
 
-public:
-	struct TMachineInfo
-	{
-		TMachineModel	Model;
-		unsigned	I2CConfig;
-		unsigned	PowerPin;
-		unsigned	LEDPin;
-	};
-
-	static const TMachineInfo *GetMachineInfo (TMachineModel Model);
-
 private:
-	const TMachineInfo *m_pMachineInfo;
-
+	CCameraInfo m_CameraInfo;
 	CI2CMaster m_I2CMaster;
 	CGPIOPin m_PowerGPIOPin;
 
@@ -107,8 +95,6 @@ private:
 	static const TReg s_Regs640x480Mode[];
 	static const TReg s_RegsRaw8Frame[];
 	static const TReg s_RegsRaw10Frame[];
-
-	static const TMachineInfo s_MachineInfo[];
 };
 
 #endif

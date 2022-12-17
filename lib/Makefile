@@ -6,7 +6,7 @@ LIBCAMERAHOME = ..
 
 OBJS	= cameramodule2.o \
 	  cameradevice.o csi2cameradevice.o \
-	  cameracontrol.o camerabuffer.o
+	  cameracontrol.o camerabuffer.o camerainfo.o
 
 libcamera.a: $(OBJS)
 	@echo "  AR    $@"
