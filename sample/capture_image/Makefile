@@ -14,6 +14,11 @@ LIBS	= $(LIBCAMERAHOME)/lib/libcamera.a \
 	  $(CIRCLEHOME)/lib/input/libinput.a \
 	  $(CIRCLEHOME)/lib/libcircle.a
 
+EXTRACLEAN += data2png
+
 include $(LIBCAMERAHOME)/Rules.mk
+
+data2png: data2png.c
+	gcc -O2 -o data2png data2png.c -lgd
 
 -include $(DEPS)

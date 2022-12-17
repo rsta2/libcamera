@@ -32,3 +32,12 @@ image, as given in the file name and the Image type RGB565 (little endian) in
 the open dialog window. It is recommended to apply the white balance function
 (Colors > Auto > White Balance) to the image to correct the color values.
 Currently the sample program does not do this on its own.
+
+Alternatively you can convert the .data files to .png files with the provided
+data2png tool. It requires LibGD (https://libgd.github.io/) installed for build.
+You may have to adjust the image WIDTH and HEIGHT in the file data2png.cpp
+before build, if you changed the image dimensions in kernel.cpp. Then just
+enter:
+
+	make data2png
+	./data2png image-3840x2464-rgb565-01.data image-01.png
