@@ -81,6 +81,8 @@ private:
 	volatile TAction	m_Action;
 	volatile CCameraDevice::TControl m_SelectedControl;
 
+	volatile bool m_bWhiteBalance;
+
 	static CKernel *s_pThis;
 };
 

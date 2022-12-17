@@ -36,8 +36,13 @@ public:
 
 	void ConvertToRGB565 (void *pOutBuffer);
 
-	void InvalidateCache (void);
+	/// \brief Apply white balance algorithm (improved White Patch method)
+	/// \param N Number of pixels, the White Patch method is applied to
+	/// \param M Number of samples taken
+	/// \note See: N. Banic, S. Loncaric: Improving the White Patch method by sampling
+	void WhiteBalance (unsigned N = 50, unsigned M = 10);
 
+	void InvalidateCache (void);
 
 private:
 	size_t m_nSize;
@@ -50,6 +55,9 @@ private:
 	unsigned m_nHeight;
 	unsigned m_nBytesPerLine;
 	CCameraDevice::TFormatCode m_Format;
+
+	unsigned m_ColorFactor[3];
+	unsigned m_nSeed;
 };
 
 #endif

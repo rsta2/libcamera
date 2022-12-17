@@ -10,6 +10,7 @@
 #include <circle/synchronize.h>
 #include <circle/bcm2835.h>
 #include <assert.h>
+#include "math.h"
 
 CCameraBuffer::CCameraBuffer (void)
 :	m_nSize (0),
@@ -17,7 +18,9 @@ CCameraBuffer::CCameraBuffer (void)
 	m_nWidth (0),
 	m_nHeight (0),
 	m_nBytesPerLine (0),
-	m_Format (CCameraDevice::FormatUnknown)
+	m_Format (CCameraDevice::FormatUnknown),
+	m_ColorFactor {65536, 65536, 65536},
+	m_nSeed (1)
 {
 }
 
@@ -78,6 +81,10 @@ void CCameraBuffer::SetFormat (unsigned nWidth, unsigned nHeight, unsigned nByte
 	m_nHeight = nHeight;
 	m_nBytesPerLine = nBytesPerLine;
 	m_Format = Format;
+
+	m_ColorFactor[0] = 65536;
+	m_ColorFactor[1] = 65536;
+	m_ColorFactor[2] = 65536;
 }
 
 // This method reads the color values from a captured image in Bayer format
@@ -132,6 +139,14 @@ u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
 		break;
 	}
 
+	CR = CR * m_ColorFactor[0] >> 16;
+	CG = CG * m_ColorFactor[1] >> 16;
+	CB = CB * m_ColorFactor[2] >> 16;
+
+	if (CR > 31) CR = 31;
+	if (CG > 31) CG = 31;
+	if (CB > 31) CB = 31;
+
 	// Normally (CG << 5), but to have a 0-31 range for all colors.
 	return (CR << 11) | (CG << 6) | CB;
 }
@@ -151,6 +166,64 @@ void CCameraBuffer::ConvertToRGB565 (void *pOutBuffer)
 			*p++ = GetPixelRGB565 (x, y);
 		}
 	}
+}
+
+// Based on the file main.cpp from the archive iwp.zip, download here:
+//	http://www.fer.unizg.hr/ipg/resources/color_constancy/
+//
+// Copyright (c) University of Zagreb, Faculty of Electrical Engineering and Computing
+// Authors: Nikola Banic <nikola.banic@fer.hr> and Sven Loncaric <sven.loncaric@fer.hr>
+void CCameraBuffer::WhiteBalance (unsigned N, unsigned M)
+{
+	assert (N > 0);
+	assert (M > 0);
+
+	m_ColorFactor[0] = 65536;
+	m_ColorFactor[1] = 65536;
+	m_ColorFactor[2] = 65536;
+
+	unsigned Result[3] = {0, 0, 0};		// R, G, B
+
+	for (unsigned i = 0; i < M; i++)
+	{
+		unsigned Max[3] = {0, 0, 0};
+
+		for (unsigned j = 0; j < N ; j++)
+		{
+			// ignore the border pixels
+			unsigned x = 1 + rand_r (&m_nSeed) * (m_nWidth - 2) / RAND_MAX;
+			unsigned y = 1 + rand_r (&m_nSeed) * (m_nHeight - 2) / RAND_MAX;
+
+			const u16 usPixel = GetPixelRGB565 (x, y);
+
+			if (Max[0] < (usPixel >> 11))
+			{
+				Max[0] = usPixel >> 11;
+			}
+
+			if (Max[1] < ((usPixel >> 6) & 0x1F))
+			{
+				Max[1] = (usPixel >> 6) & 0x1F;
+			}
+
+			if (Max[2] < (usPixel & 0x1F))
+			{
+				Max[2] = usPixel & 0x1F;
+			}
+		}
+
+		Result[0] += Max[0];
+		Result[1] += Max[1];
+		Result[2] += Max[2];
+	}
+
+	float fSum = Result[0] * Result[0] + Result[1] * Result[1] + Result[2] * Result[2];
+	fSum /= 3;
+	fSum = sqrtf (fSum);
+
+	m_ColorFactor[0] = 65536 * fSum / Result[0];
+	m_ColorFactor[1] = 65536 * fSum / Result[1];
+	m_ColorFactor[2] = 65536 * fSum / Result[2];
 }
 
 void CCameraBuffer::InvalidateCache (void)

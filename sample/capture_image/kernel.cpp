@@ -62,7 +62,8 @@ CKernel::CKernel (void)
 	m_nDigitalGain (DIGITAL_GAIN),
 	m_pKeyboard (nullptr),
 	m_Action (ActionNone),
-	m_SelectedControl (CCameraDevice::ControlUnknown)
+	m_SelectedControl (CCameraDevice::ControlUnknown),
+	m_bWhiteBalance (false)
 {
 	s_pThis = this;
 
@@ -195,6 +196,12 @@ TShutdownMode CKernel::Run (void)
 		}
 		while (!pBuffer);
 
+		// Optionally apply white balancing
+		if (m_bWhiteBalance)
+		{
+			pBuffer->WhiteBalance ();
+		}
+
 		// Convert and draw preview image
 		static const unsigned nSizeFactor = 10;
 		unsigned x0 = m_Screen.GetWidth () - WIDTH / nSizeFactor;
@@ -268,6 +275,13 @@ TShutdownMode CKernel::Run (void)
 				{
 					m_Camera.BufferProcessed ();
 				}
+			}
+
+			if (m_bWhiteBalance)
+			{
+				LOGNOTE ("Apply white balancing");
+
+				pBuffer->WhiteBalance ();
 			}
 
 			// Convert image to RGB565
@@ -402,6 +416,10 @@ void CKernel::KeyPressedHandler (const char *pString)
 		 || strcmp (pString, "\x1B[B") == 0)	// Down
 	{
 		s_pThis->ControlUpDown (-10);
+	}
+	else if (strcmp (pString, "w") == 0)
+	{
+		s_pThis->m_bWhiteBalance = !s_pThis->m_bWhiteBalance;
 	}
 	else if (   strcmp (pString, "q") == 0
 		 || strcmp (pString, "x") == 0)
