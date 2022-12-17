@@ -11,11 +11,15 @@ This is work in progress in an early stage. Currently only the Raspberry Pi Came
 * Raspberry Pi Model B (Release 2 with 512 MB)
 * Raspberry Pi Model A+
 * Raspberry Pi Model B+
+* Raspberry Pi Zero W
+* Raspberry Pi Zero 2 W
 * Raspberry Pi 2 Model B
 * Raspberry Pi 3 Model B
 * Raspberry Pi 3 Model A+
 * Raspberry Pi 3 Model B+
 * Raspberry Pi 4 Model B
+
+For the Raspberry Pi Zero 2 W you need the file *bcm2710-rpi-zero-2-w.dtb* on the SD card, to be able to use it with a camera. This file was not used with Circle before. Go to the directory *circle/boot/* in this project and enter `make` to download the Raspberry Pi firmware with this file included.
 
 Getting
 -------

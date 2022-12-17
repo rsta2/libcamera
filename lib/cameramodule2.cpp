@@ -948,9 +948,9 @@ const CCameraModule2::TMachineInfo CCameraModule2::s_MachineInfo[] =
 	{MachineModelBRelease2MB512,	0,  21,  5},
 	{MachineModelAPlus,		1,  41, 32},
 	{MachineModelBPlus,		1,  41, 32},
-	//{MachineModelZero,		1,  41, 32},
-	//{MachineModelZeroW,		1,  44, 40},
-	//{MachineModelZero2W,		2,  40,  0},
+	//{MachineModelZero,		1,  41, 32},	// v1.3 only
+	{MachineModelZeroW,		1,  44, 40},
+	{MachineModelZero2W,		2,  40,  0},
 	{MachineModel2B,		1,  41, 32},
 	{MachineModel3B,		2, 133,  0},
 	{MachineModel3APlus,		2, 133,  0},
