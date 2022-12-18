@@ -33,7 +33,8 @@ protected:
 	void DisableRX (void);
 
 	// implemented by I2C camera driver
-	virtual bool SetMode (unsigned nWidth, unsigned nHeight, unsigned nDepth) = 0;
+	// returns adjusted width and height
+	virtual bool SetMode (unsigned *pWidth, unsigned *pHeight, unsigned nDepth) = 0;
 
 	virtual TFormatCode GetPhysicalFormat (void) const = 0;
 	virtual TFormatCode GetLogicalFormat (void) const = 0;

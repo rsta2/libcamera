@@ -110,12 +110,12 @@ TShutdownMode CKernel::Run (void)
 
 	// Get and check the image format info
 	m_FormatInfo = m_Camera.GetFormatInfo ();
-	assert (m_FormatInfo.Width == WIDTH);
-	assert (m_FormatInfo.Height == HEIGHT);
 
 	// Use the image or display format, whatever is smaller
-	unsigned nMinWidth = WIDTH <= m_Screen.GetWidth () ? WIDTH : m_Screen.GetWidth ();
-	unsigned nMinHeight = HEIGHT <= m_Screen.GetHeight () ? HEIGHT : m_Screen.GetHeight ();
+	unsigned nMinWidth =   m_FormatInfo.Width <= m_Screen.GetWidth ()
+			     ? m_FormatInfo.Width : m_Screen.GetWidth ();
+	unsigned nMinHeight =  m_FormatInfo.Height <= m_Screen.GetHeight ()
+			     ? m_FormatInfo.Height : m_Screen.GetHeight ();
 
 	// Clear both display areas
 	m_Screen.ClearScreen (BLACK_COLOR);

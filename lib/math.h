@@ -20,4 +20,9 @@ static inline int rand_r (unsigned *pSeed)
 	return (unsigned) (*pSeed / 65536) % 32768;
 }
 
+static inline int abs (int n)
+{
+	return n >= 0 ? n : -n;
+}
+
 #endif

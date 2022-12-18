@@ -7,7 +7,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <gd.h>
-#include "../config.h"
+
+#define WIDTH	640
+#define HEIGHT	480
 
 typedef unsigned short color_t;
 typedef color_t image_t[HEIGHT][WIDTH];

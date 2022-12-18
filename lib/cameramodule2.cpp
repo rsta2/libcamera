@@ -29,6 +29,7 @@
 #include <circle/timer.h>
 #include <circle/util.h>
 #include <assert.h>
+#include "math.h"
 
 #define IMX219_I2C_SLAVE_ADDRESS	0x10
 
@@ -309,26 +310,29 @@ void CCameraModule2::Stop (void)
 	LOGDBG ("Streaming stopped");
 }
 
-bool CCameraModule2::SetMode (unsigned nWidth, unsigned nHeight, unsigned nDepth)
+bool CCameraModule2::SetMode (unsigned *pWidth, unsigned *pHeight, unsigned nDepth)
 {
-	const TModeInfo *pMode;
-	for (pMode = s_Modes; pMode->Width; pMode++)
+	assert (pWidth);
+	assert (pHeight);
+
+	// find best fitting mode
+	const TModeInfo *pBestMode = nullptr;
+	u32 nMinError = 0xFFFFFFFFU;
+	for (const TModeInfo *pMode = s_Modes; pMode->Width; pMode++)
 	{
-		if (   pMode->Width == nWidth
-		    && pMode->Height == nHeight)
+		u32 nError = abs (*pWidth - pMode->Width) + abs (*pHeight - pMode->Height);
+		if (nError < nMinError)
 		{
-			break;
+			pBestMode = pMode;
+			nMinError = nError;
 		}
 	}
 
-	if (!pMode->Width)
-	{
-		LOGWARN ("Resolution not supported (%ux%u)", nWidth, nHeight);
+	m_pMode = pBestMode;
+	assert (m_pMode);
 
-		return false;
-	}
-
-	m_pMode = pMode;
+	*pWidth = m_pMode->Width;
+	*pHeight = m_pMode->Height;
 
 	SetupControls ();
 

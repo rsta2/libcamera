@@ -11,25 +11,19 @@
 
 #define CAMERA_MODULE	2		// or 1
 
-#define WIDTH		640		// define only one WIDTH / HEIGHT combination
-#define HEIGHT		480
+// Supported image formats:
+//
+// Width x Height	Camera Module
+//
+//  640 x  480		1 & 2
+// 1296 x  972		1
+// 1640 x 1232		2
+// 1920 x 1080		1 & 2
+// 2592 x 1944		1
+// 3280 x 2464		2
 
-//#define WIDTH		1920
-//#define HEIGHT	1080
-
-#if CAMERA_MODULE == 1
-	//#define WIDTH		1296
-	//#define HEIGHT	972
-
-	//#define WIDTH		2592
-	//#define HEIGHT	1944
-#else
-	//#define WIDTH		1640
-	//#define HEIGHT	1232
-
-	//#define WIDTH		3280
-	//#define HEIGHT	2464
-#endif
+#define WIDTH		m_Screen.GetWidth()	// by default use the screen size
+#define HEIGHT		m_Screen.GetHeight()	// will be adjusted to nearest camera format
 
 #define VFLIP		false
 #define HFLIP		false

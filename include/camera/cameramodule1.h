@@ -35,7 +35,7 @@ public:
 
 private:
 	// Called from base class CCSI2CameraDevice
-	bool SetMode (unsigned nWidth, unsigned nHeight, unsigned nDepth);
+	bool SetMode (unsigned *pWidth, unsigned *pHeight, unsigned nDepth);
 	TFormatCode GetPhysicalFormat (void) const;
 	TFormatCode GetLogicalFormat (void) const;
 	const TRect GetCropInfo (void) const;

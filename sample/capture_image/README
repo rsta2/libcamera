@@ -36,8 +36,8 @@ the open dialog window.
 
 Alternatively you can convert the .data files to .png files with the provided
 data2png tool. It requires LibGD (https://libgd.github.io/) installed for build.
-You may have to adjust the image WIDTH and HEIGHT in the file ../config.h
-before build. Then just enter:
+You may have to adjust the image WIDTH and HEIGHT (default 640x480) in the file
+data2png.c before build. Then just enter:
 
 	make data2png
 	./data2png image-640x480-rgb565-01.data image-01.png

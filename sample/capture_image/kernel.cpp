@@ -150,10 +150,8 @@ TShutdownMode CKernel::Run (void)
 
 	// Get and check the image format info
 	m_FormatInfo = m_Camera.GetFormatInfo ();
-	assert (m_FormatInfo.Width == WIDTH);
-	assert (m_FormatInfo.Height == HEIGHT);
 
-	TScreenColor *pRGBBuffer = new TScreenColor[WIDTH * HEIGHT];
+	TScreenColor *pRGBBuffer = new TScreenColor[m_FormatInfo.Width * m_FormatInfo.Height];
 	if (!pRGBBuffer)
 	{
 		LOGPANIC ("Cannot allocate RGB buffer");
@@ -183,11 +181,11 @@ TShutdownMode CKernel::Run (void)
 		}
 
 		// Convert and draw preview image
-		static const unsigned nSizeFactor = WIDTH > 640 ? 10 : 2;
-		unsigned x0 = m_Screen.GetWidth () - WIDTH / nSizeFactor;
-		for (unsigned y = 0; y < HEIGHT; y += nSizeFactor)
+		static const unsigned nSizeFactor = 4;
+		unsigned x0 = m_Screen.GetWidth () - m_FormatInfo.Width / nSizeFactor;
+		for (unsigned y = 0; y < m_FormatInfo.Height; y += nSizeFactor)
 		{
-			for (unsigned x = 0; x < WIDTH; x += nSizeFactor)
+			for (unsigned x = 0; x < m_FormatInfo.Width; x += nSizeFactor)
 			{
 				m_Screen.SetPixel (x0 + x / nSizeFactor, y / nSizeFactor,
 						   pBuffer->GetPixelRGB565 (x, y));
@@ -280,7 +278,7 @@ TShutdownMode CKernel::Run (void)
 			{
 				CString Filename;
 				Filename.Format ("%s/image-%ux%u-rgb565-%02u.data",
-						 DRIVE, WIDTH, HEIGHT, i);
+						 DRIVE, m_FormatInfo.Width, m_FormatInfo.Height, i);
 
 				FIL File;
 				if (f_open (&File, Filename, FA_WRITE | FA_CREATE_NEW) == FR_OK)
@@ -288,8 +286,9 @@ TShutdownMode CKernel::Run (void)
 					LOGNOTE ("Saving image to file: %s", (const char *) Filename);
 
 					unsigned nBytesWritten;
-					if (f_write (&File, pRGBBuffer,
-						     WIDTH * HEIGHT * sizeof (TScreenColor),
+					if (f_write (&File, pRGBBuffer,   m_FormatInfo.Width
+									* m_FormatInfo.Height
+									* sizeof (TScreenColor),
 						     &nBytesWritten) != FR_OK)
 					{
 						LOGWARN ("Write error");
