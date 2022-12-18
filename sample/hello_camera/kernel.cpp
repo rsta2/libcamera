@@ -9,39 +9,6 @@
 #include "kernel.h"
 #include <camera/camerabuffer.h>
 
-//#define WIDTH		640
-//#define HEIGHT	480
-
-#define WIDTH		1640
-#define HEIGHT		1232
-
-//#define WIDTH		1920
-//#define HEIGHT	1080
-
-//#define WIDTH		3280
-//#define HEIGHT	2464
-
-#define CAM_DEPTH	10	// TODO: depth 8 does not work
-
-#define VFLIP		false
-#define HFLIP		false
-
-#define EXPOSURE	40	// percent
-#define ANALOG_GAIN	60	// percent
-#define DIGITAL_GAIN	60	// percent
-
-#define TEST_PATTERN	CCameraModule2::TestPatternDisable
-//#define TEST_PATTERN	CCameraModule2::TestPatternSolidColor
-//#define TEST_PATTERN	CCameraModule2::TestPatternColorBars
-
-#if CAM_DEPTH == 8
-	typedef u8 TCameraColor;
-#elif CAM_DEPTH == 10
-	typedef u16 TCameraColor;
-#else
-	#error CAM_DEPTH must be 8 or 10!
-#endif
-
 #if DEPTH != 16
 	#error Screen DEPTH must be 16!
 #endif
@@ -109,7 +76,7 @@ TShutdownMode CKernel::Run (void)
 	LOGNOTE ("Compile time: " __DATE__ " " __TIME__);
 
 	// Set the wanted image format first
-	if (!m_Camera.SetFormat (WIDTH, HEIGHT, CAM_DEPTH))
+	if (!m_Camera.SetFormat (WIDTH, HEIGHT))
 	{
 		LOGPANIC ("Cannot set format");
 	}
@@ -126,14 +93,14 @@ TShutdownMode CKernel::Run (void)
 
 	m_Camera.SetControlValuePercent (CCameraDevice::ControlExposure, EXPOSURE);
 	m_Camera.SetControlValuePercent (CCameraDevice::ControlAnalogGain, ANALOG_GAIN);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlDigitalGain, DIGITAL_GAIN);
 
-	m_Camera.SetControlValue (CCameraDevice::ControlTestPattern, TEST_PATTERN);
-	// solid white
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlTestPatternRed, 100);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlTestPatternGreenR, 100);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlTestPatternGreenB, 100);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlTestPatternBlue, 100);
+#if CAMERA_MODULE == 1
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
+#else
+	m_Camera.SetControlValuePercent (CCameraDevice::ControlDigitalGain, DIGITAL_GAIN);
+#endif
 
 	// Start the image capture
 	if (!m_Camera.Start ())

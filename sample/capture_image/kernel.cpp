@@ -11,36 +11,7 @@
 #include <circle/string.h>
 #include <circle/util.h>
 
-//#define WIDTH		640
-//#define HEIGHT	480
-
-//#define WIDTH		1640
-//#define HEIGHT	1232
-
-//#define WIDTH		1920
-//#define HEIGHT	1080
-
-#define WIDTH		3280
-#define HEIGHT		2464
-
-#define CAM_DEPTH	10	// TODO: depth 8 does not work
-
-#define VFLIP		false
-#define HFLIP		false
-
-#define EXPOSURE	50	// percent
-#define ANALOG_GAIN	50	// percent
-#define DIGITAL_GAIN	50	// percent
-
 #define DRIVE		"SD:"
-
-#if CAM_DEPTH == 8
-	typedef u8 TCameraColor;
-#elif CAM_DEPTH == 10
-	typedef u16 TCameraColor;
-#else
-	#error CAM_DEPTH must be 8 or 10!
-#endif
 
 #if DEPTH != 16
 	#error Screen DEPTH must be 16!
@@ -59,7 +30,9 @@ CKernel::CKernel (void)
 	m_Camera (&m_Interrupt),
 	m_nExposure (EXPOSURE),
 	m_nAnalogGain (ANALOG_GAIN),
+#if CAMERA_MODULE == 2
 	m_nDigitalGain (DIGITAL_GAIN),
+#endif
 	m_pKeyboard (nullptr),
 	m_Action (ActionNone),
 	m_SelectedControl (CCameraDevice::ControlUnknown),
@@ -149,7 +122,7 @@ TShutdownMode CKernel::Run (void)
 	}
 
 	// Set the wanted image format first
-	if (!m_Camera.SetFormat (WIDTH, HEIGHT, CAM_DEPTH))
+	if (!m_Camera.SetFormat (WIDTH, HEIGHT))
 	{
 		LOGPANIC ("Cannot set format");
 	}
@@ -166,7 +139,14 @@ TShutdownMode CKernel::Run (void)
 
 	m_Camera.SetControlValuePercent (CCameraDevice::ControlExposure, m_nExposure);
 	m_Camera.SetControlValuePercent (CCameraDevice::ControlAnalogGain, m_nAnalogGain);
+
+#if CAMERA_MODULE == 1
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
+	m_Camera.SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
+#else
 	m_Camera.SetControlValuePercent (CCameraDevice::ControlDigitalGain, m_nDigitalGain);
+#endif
 
 	// Get and check the image format info
 	m_FormatInfo = m_Camera.GetFormatInfo ();
@@ -203,7 +183,7 @@ TShutdownMode CKernel::Run (void)
 		}
 
 		// Convert and draw preview image
-		static const unsigned nSizeFactor = 10;
+		static const unsigned nSizeFactor = WIDTH > 640 ? 10 : 2;
 		unsigned x0 = m_Screen.GetWidth () - WIDTH / nSizeFactor;
 		for (unsigned y = 0; y < HEIGHT; y += nSizeFactor)
 		{
@@ -233,10 +213,12 @@ TShutdownMode CKernel::Run (void)
 				pControl = "analog gain";
 				break;
 
+#if CAMERA_MODULE == 2
 			case CCameraDevice::ControlDigitalGain:
 				pValue = &m_nDigitalGain;
 				pControl = "digital gain";
 				break;
+#endif
 
 			default:
 				assert (0);
@@ -365,9 +347,11 @@ void CKernel::ControlUpDown (int nUpDown)
 		pValue = &m_nAnalogGain;
 		break;
 
+#if CAMERA_MODULE == 2
 	case CCameraDevice::ControlDigitalGain:
 		pValue = &m_nDigitalGain;
 		break;
+#endif
 
 	default:
 		return;
@@ -403,10 +387,12 @@ void CKernel::KeyPressedHandler (const char *pString)
 	{
 		s_pThis->m_SelectedControl = CCameraDevice::ControlAnalogGain;
 	}
+#if CAMERA_MODULE == 2
 	else if (strcmp (pString, "d") == 0)
 	{
 		s_pThis->m_SelectedControl = CCameraDevice::ControlDigitalGain;
 	}
+#endif
 	else if (   strcmp (pString, "+") == 0
 		 || strcmp (pString, "\x1B[A") == 0)	// Up
 	{

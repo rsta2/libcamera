@@ -127,6 +127,7 @@ CCameraModule2::CCameraModule2 (CInterruptSystem *pInterrupt)
 :	CCSI2CameraDevice (pInterrupt),
 	m_CameraInfo (CMachineInfo::Get ()->GetMachineModel ()),
 	m_I2CMaster (m_CameraInfo.GetI2CDevice (), true, m_CameraInfo.GetI2CConfig ()),
+	m_bPoweredOn (false),
 	m_pMode (nullptr),
 	m_PhysicalFormat (FormatUnknown),
 	m_LogicalFormat (FormatUnknown)
@@ -135,7 +136,28 @@ CCameraModule2::CCameraModule2 (CInterruptSystem *pInterrupt)
 
 CCameraModule2::~CCameraModule2 (void)
 {
-	// TODO: Set power GPIO pin to LOW
+	if (m_bPoweredOn)
+	{
+		if (!WriteReg (IMX219_REG_MODE_SELECT, 1, IMX219_MODE_STANDBY))
+		{
+			LOGWARN ("Cannot enter standby");
+		}
+
+		unsigned nPowerPin = m_CameraInfo.GetPowerPin ();
+		if (nPowerPin < GPIO_PINS)
+		{
+			m_PowerGPIOPin.Write (LOW);
+			m_PowerGPIOPin.SetMode (GPIOModeInput);
+		}
+		else
+		{
+			CBcmPropertyTags Tags;
+			TPropertyTagGPIOState GPIOState;
+			GPIOState.nGPIO = nPowerPin;
+			GPIOState.nState = 0;
+			Tags.GetTag (PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8);
+		}
+	}
 }
 
 bool CCameraModule2::Initialize (void)
@@ -179,6 +201,8 @@ bool CCameraModule2::Initialize (void)
 			return false;
 		}
 	}
+
+	m_bPoweredOn = true;
 
 	CTimer::Get ()->usDelay (6200);
 
@@ -237,6 +261,11 @@ bool CCameraModule2::Start (void)
 	for (unsigned i = 0; i < ControlUnknown; i++)
 	{
 		TControl Control = static_cast <TControl> (i);
+		if (!IsControlSupported (Control))
+		{
+			continue;
+		}
+
 		int nValue = m_Control[Control].GetValue ();
 
 		if (!SetControlValue (Control, nValue))
@@ -400,6 +429,14 @@ void CCameraModule2::SetupControls (void)
 						 IMX219_TESTP_BLUE_DEFAULT);
 }
 
+bool CCameraModule2::IsControlSupported (TControl Control) const
+{
+	assert (Control < ControlUnknown);
+	CCameraControl::TControlInfo Info = m_Control[Control].GetInfo ();
+
+	return Info.Supported;
+}
+
 int CCameraModule2::GetControlValue (TControl Control) const
 {
 	assert (Control < ControlUnknown);
@@ -484,7 +521,6 @@ bool CCameraModule2::SetControlValue (TControl Control, int nValue)
 		break;
 
 	default:
-		assert (0);
 		break;
 	}
 

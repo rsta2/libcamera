@@ -10,7 +10,7 @@
 #include <assert.h>
 
 CCameraControl::CCameraControl (void)
-:	m_Info {0, 0, 1, 0},
+:	m_Info {false, 0, 0, 1, 0},
 	m_nValue (0)
 {
 }
@@ -26,6 +26,7 @@ void CCameraControl::Setup (int nMin, int nMax, int nStep, int nDefault)
 	assert (nMin <= nDefault);
 	assert (nDefault <= nMax);
 
+	m_Info.Supported = true;
 	m_Info.Min = nMin;
 	m_Info.Max = nMax;
 	m_Info.Step = nStep;
@@ -41,6 +42,11 @@ int CCameraControl::GetValue (void) const
 
 bool CCameraControl::SetValue (int nValue)
 {
+	if (!m_Info.Supported)
+	{
+		return false;
+	}
+
 	if (m_Info.Min <= nValue && nValue <= m_Info.Max)
 	{
 		m_nValue = nValue;

@@ -5,7 +5,7 @@ the SD card in a raw RGB565 format. You have to attach an USB PC keyboard to use
 it. The program displays a preview image, so that you can adjust the camera
 controls exposure, analog gain and digital gain with the keyboard, before
 capturing the image. You may adjust the parameters image width and height,
-vertical and horizontal flip in the file kernel.cpp before build.
+vertical and horizontal flip in the file ../config.h before build.
 
 Via the keyboard you can choose the following functions:
 
@@ -15,9 +15,11 @@ c	Capture image				Space, Enter
 e	Select exposure to be adjusted
 a	Select analog gain to be adjusted
 d	Select digital gain to be adjusted
+	(Camera Module 2 only)
 +	Increase selected control by 10%	Up
 -	Decrease selected control by 10%	Down
 w	Toggle white balancing on/off
+	(not necessary on Camera Module 1)
 q	Reboot					x
 
 You may have to create a file cmdline.txt on the SD card with this contents to
@@ -34,9 +36,8 @@ the open dialog window.
 
 Alternatively you can convert the .data files to .png files with the provided
 data2png tool. It requires LibGD (https://libgd.github.io/) installed for build.
-You may have to adjust the image WIDTH and HEIGHT in the file data2png.cpp
-before build, if you changed the image dimensions in kernel.cpp. Then just
-enter:
+You may have to adjust the image WIDTH and HEIGHT in the file ../config.h
+before build. Then just enter:
 
 	make data2png
-	./data2png image-3840x2464-rgb565-01.data image-01.png
+	./data2png image-640x480-rgb565-01.data image-01.png

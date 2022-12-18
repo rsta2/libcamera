@@ -1,12 +1,12 @@
 libcamera
 =========
 
-This project provides camera support for Circle-based applications. Only cameras with CSI-2 interface are supported. The drivers in this project directly access the hardware, without using MMAL / VCHIQ software components. There are no specific settings in the file *config.txt* necessary. Device tree overlays are not needed.
+This project provides camera support for Circle-based applications. Only cameras with CSI-2 interface are supported. The drivers in this project directly access the hardware, without using MMAL / VCHIQ software components. There are no specific settings in the file *config.txt* necessary.
 
 Status
 ------
 
-This is work in progress in an early stage. Currently only the Raspberry Pi Camera Module 2 (with IMX219 sensor) is supported, connected to the camera connector of the following Raspberry Pi models:
+This is work in progress. Currently the Raspberry Pi Camera Module 1 (with OV5647 sensor) and Camera Module 2 (with IMX219 sensor) are supported, connected to the camera connector of the following Raspberry Pi models:
 
 * Raspberry Pi Model B (Release 2 with 512 MB)
 * Raspberry Pi Model A+
@@ -53,7 +53,7 @@ If you want to try one of the provided sample programs, now go its subdirectory 
 
 	make
 
-The built kernel image can be installed as described in the main Circle *README.md* file. Please read the file *README* in the subdirectory of the sample for more info!
+The built kernel image can be installed as described in the main Circle *README.md* file. Please read the file *README* in the subdirectory of the sample for more info! You may have to set the version of your Camera Module (default 2) in the file *sample/config.h* before build.
 
 Documentation
 -------------

@@ -24,7 +24,7 @@ public:
 
 	bool Initialize (void);
 
-	bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth);
+	bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth = 10);
 
 	TFormatInfo GetFormatInfo (void) const;
 

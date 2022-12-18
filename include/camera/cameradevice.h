@@ -95,17 +95,23 @@ public:
 	enum TControl
 	{
 		ControlVBlank,
-		ControlHBlank,
+		ControlHBlank,			// Camera Module 2 only
 		ControlVFlip,			// do not change, when streaming active
 		ControlHFlip,			// do not change, when streaming active
 		ControlExposure,
 		ControlAnalogGain,
-		ControlDigitalGain,
-		ControlTestPattern,
-		ControlTestPatternRed,
-		ControlTestPatternGreenR,
-		ControlTestPatternGreenB,
-		ControlTestPatternBlue,
+		ControlDigitalGain,		// Camera Module 2 only
+
+		ControlAutoExposure,		// Camera Module 1 only
+		ControlAutoGain,		// Camera Module 1 only
+		ControlAutoWhiteBalance,	// Camera Module 1 only
+
+		ControlTestPattern,		// Camera Module 2 only
+		ControlTestPatternRed,		// Camera Module 2 only
+		ControlTestPatternGreenR,	// Camera Module 2 only
+		ControlTestPatternGreenB,	// Camera Module 2 only
+		ControlTestPatternBlue,		// Camera Module 2 only
+
 		ControlUnknown
 	};
 
@@ -116,7 +122,7 @@ public:
 	virtual ~CCameraDevice (void);
 
 	// Must not be called, when streaming active
-	virtual bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth) = 0;
+	virtual bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth = 10) = 0;
 
 	virtual bool Start (void) = 0;
 	virtual void Stop (void) = 0;
@@ -124,6 +130,7 @@ public:
 	virtual TFormatInfo GetFormatInfo (void) const = 0;
 
 	// Controls
+	virtual bool IsControlSupported (TControl Control) const = 0;
 	virtual int GetControlValue (TControl Control) const = 0;
 	virtual bool SetControlValue (TControl Control, int nValue) = 0;
 	virtual bool SetControlValuePercent (TControl Control, unsigned nPercent) = 0;

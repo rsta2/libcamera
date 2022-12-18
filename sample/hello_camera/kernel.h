@@ -20,7 +20,9 @@
 #include <circle/logger.h>
 #include <circle/2dgraphics.h>
 #include <circle/types.h>
+#include <camera/cameramodule1.h>
 #include <camera/cameramodule2.h>
+#include "../config.h"
 
 enum TShutdownMode
 {
@@ -52,7 +54,11 @@ private:
 	CLogger			m_Logger;
 	C2DGraphics		m_Screen;
 
+#if CAMERA_MODULE == 1
+	CCameraModule1		m_Camera;
+#else
 	CCameraModule2		m_Camera;
+#endif
 
 	CCameraDevice::TFormatInfo m_FormatInfo;
 };

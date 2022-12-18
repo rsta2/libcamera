@@ -14,6 +14,7 @@ class CCameraControl
 public:
 	struct TControlInfo
 	{
+		bool Supported;
 		int Min;
 		int Max;
 		int Step;
