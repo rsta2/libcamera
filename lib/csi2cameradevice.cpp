@@ -111,7 +111,10 @@ bool CCSI2CameraDevice::Initialize (void)
 
 bool CCSI2CameraDevice::SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth)
 {
-	assert (!m_bActive);
+	if (m_bActive)
+	{
+		return false;
+	}
 
 	// call camera driver
 	if (!SetMode (&nWidth, &nHeight, nDepth))
