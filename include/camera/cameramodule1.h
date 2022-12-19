@@ -22,6 +22,7 @@ public:
 	CCameraModule1 (CInterruptSystem *pInterrupt);
 	~CCameraModule1 (void);
 
+	bool Probe (void);
 	bool Initialize (void);
 
 	bool Start (void);
@@ -78,6 +79,8 @@ private:
 	TFormatCode m_LogicalFormat;
 
 	CCameraControl m_Control[ControlUnknown];
+
+	bool m_bIgnoreErrors;
 
 	static const TFormatCode s_Formats[2][4];	// 10 and 10P
 	static const TModeInfo s_Modes[];

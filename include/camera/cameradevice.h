@@ -121,6 +121,9 @@ public:
 	CCameraDevice (void);
 	virtual ~CCameraDevice (void);
 
+	// for internal use
+	virtual bool Probe (void) = 0;
+
 	// Must not be called, when streaming active
 	virtual bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth = 10) = 0;
 

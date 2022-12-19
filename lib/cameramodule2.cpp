@@ -24,6 +24,7 @@
  */
 #include <camera/cameramodule2.h>
 #include <circle/bcmpropertytags.h>
+#include <circle/devicenameservice.h>
 #include <circle/machineinfo.h>
 #include <circle/logger.h>
 #include <circle/timer.h>
@@ -124,6 +125,8 @@
 
 LOGMODULE ("camera2");
 
+static const char DeviceName[] = "cam1";
+
 CCameraModule2::CCameraModule2 (CInterruptSystem *pInterrupt)
 :	CCSI2CameraDevice (pInterrupt),
 	m_CameraInfo (CMachineInfo::Get ()->GetMachineModel ()),
@@ -131,17 +134,22 @@ CCameraModule2::CCameraModule2 (CInterruptSystem *pInterrupt)
 	m_bPoweredOn (false),
 	m_pMode (nullptr),
 	m_PhysicalFormat (FormatUnknown),
-	m_LogicalFormat (FormatUnknown)
+	m_LogicalFormat (FormatUnknown),
+	m_bIgnoreErrors (false)
 {
 }
 
 CCameraModule2::~CCameraModule2 (void)
 {
+	CDeviceNameService::Get ()->RemoveDevice (DeviceName, FALSE);
+
 	if (m_bPoweredOn)
 	{
+		m_bIgnoreErrors = true;
+
 		if (!WriteReg (IMX219_REG_MODE_SELECT, 1, IMX219_MODE_STANDBY))
 		{
-			LOGWARN ("Cannot enter standby");
+			//LOGWARN ("Cannot enter standby");
 		}
 
 		unsigned nPowerPin = m_CameraInfo.GetPowerPin ();
@@ -159,6 +167,17 @@ CCameraModule2::~CCameraModule2 (void)
 			Tags.GetTag (PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8);
 		}
 	}
+}
+
+bool CCameraModule2::Probe (void)
+{
+	m_bIgnoreErrors = true;
+
+	bool bOK = Initialize ();
+
+	m_bIgnoreErrors = false;
+
+	return bOK;
 }
 
 bool CCameraModule2::Initialize (void)
@@ -211,7 +230,10 @@ bool CCameraModule2::Initialize (void)
 	if (   !ReadReg (IMX219_REG_CHIP_ID, 2, &usChipID)
 	    || usChipID != IMX219_CHIP_ID)
 	{
-		LOGERR ("Invalid chip ID");
+		if (!m_bIgnoreErrors)
+		{
+			LOGERR ("Invalid chip ID");
+		}
 
 		return false;
 	}
@@ -234,6 +256,8 @@ bool CCameraModule2::Initialize (void)
 	}
 
 	CTimer::Get ()->usDelay (100);
+
+	CDeviceNameService::Get ()->AddDevice (DeviceName, this, FALSE);
 
 	LOGNOTE ("Camera Module 2 initialized");
 
@@ -552,7 +576,10 @@ bool CCameraModule2::ReadReg (u16 usReg, unsigned nBytes, u16 *pValue)
 	int nResult = m_I2CMaster.Write (IMX219_I2C_SLAVE_ADDRESS, &usReg, sizeof usReg);
 	if (nResult != sizeof usReg)
 	{
-		LOGWARN ("I2C write failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C write failed (%d)", nResult);
+		}
 
 		return false;
 	}
@@ -562,7 +589,10 @@ bool CCameraModule2::ReadReg (u16 usReg, unsigned nBytes, u16 *pValue)
 	nResult = m_I2CMaster.Read (IMX219_I2C_SLAVE_ADDRESS, &usBuffer, nBytes);
 	if (nResult != (int) nBytes)
 	{
-		LOGWARN ("I2C read failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C read failed (%d)", nResult);
+		}
 
 		return false;
 	}
@@ -598,7 +628,10 @@ bool CCameraModule2::WriteReg (u16 usReg, unsigned nBytes, u16 usValue)
 	int nResult = m_I2CMaster.Write (IMX219_I2C_SLAVE_ADDRESS, Buffer, nBytes + 2);
 	if (nResult != (int) (nBytes + 2))
 	{
-		LOGWARN ("I2C write failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C write failed (%d)", nResult);
+		}
 
 		return false;
 	}

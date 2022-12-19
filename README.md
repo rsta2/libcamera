@@ -53,7 +53,7 @@ If you want to try one of the provided sample programs, now go its subdirectory 
 
 	make
 
-The built kernel image can be installed as described in the main Circle *README.md* file. Please read the file *README* in the subdirectory of the sample for more info! You may have to set the version of your Camera Module (default 2) in the file *sample/config.h* before build.
+The built kernel image can be installed as described in the main Circle *README.md* file. Please read the file *README* in the subdirectory of the sample for more info!
 
 Documentation
 -------------

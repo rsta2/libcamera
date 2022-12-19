@@ -22,6 +22,7 @@
  */
 #include <camera/cameramodule1.h>
 #include <circle/bcmpropertytags.h>
+#include <circle/devicenameservice.h>
 #include <circle/machineinfo.h>
 #include <circle/logger.h>
 #include <circle/timer.h>
@@ -83,6 +84,8 @@
 
 LOGMODULE ("camera1");
 
+static const char DeviceName[] = "cam1";
+
 CCameraModule1::CCameraModule1 (CInterruptSystem *pInterrupt)
 :	CCSI2CameraDevice (pInterrupt),
 	m_CameraInfo (CMachineInfo::Get ()->GetMachineModel ()),
@@ -90,20 +93,25 @@ CCameraModule1::CCameraModule1 (CInterruptSystem *pInterrupt)
 	m_bPoweredOn (false),
 	m_pMode (nullptr),
 	m_PhysicalFormat (FormatUnknown),
-	m_LogicalFormat (FormatUnknown)
+	m_LogicalFormat (FormatUnknown),
+	m_bIgnoreErrors (false)
 {
 }
 
 CCameraModule1::~CCameraModule1 (void)
 {
+	CDeviceNameService::Get ()->RemoveDevice (DeviceName, FALSE);
+
 	if (m_bPoweredOn)
 	{
+		m_bIgnoreErrors = true;
+
 		u8 uchBuffer;
 		if (   !WriteRegs (s_RegsSensorDisable)
 		    || !ReadReg8 (OV5647_SW_STANDBY, &uchBuffer)
 		    || !WriteReg8 (OV5647_SW_STANDBY, uchBuffer & ~0x01))
 		{
-			LOGWARN ("Cannot enter standby");
+			//LOGWARN ("Cannot enter standby");
 		}
 
 		unsigned nPowerPin = m_CameraInfo.GetPowerPin ();
@@ -121,6 +129,17 @@ CCameraModule1::~CCameraModule1 (void)
 			Tags.GetTag (PROPTAG_SET_SET_GPIO_STATE, &GPIOState, sizeof GPIOState, 8);
 		}
 	}
+}
+
+bool CCameraModule1::Probe (void)
+{
+	m_bIgnoreErrors = true;
+
+	bool bOK = Initialize ();
+
+	m_bIgnoreErrors = false;
+
+	return bOK;
 }
 
 bool CCameraModule1::Initialize (void)
@@ -176,7 +195,10 @@ bool CCameraModule1::Initialize (void)
 	    || !WriteReg8 (OV5647_REG_FRAME_OFF_NUMBER, 0x0f)
 	    || !WriteReg8 (OV5640_REG_PAD_OUT, 0x01))
 	{
-		LOGERR ("Camera not available, check power");
+		if (!m_bIgnoreErrors)
+		{
+			LOGERR ("Camera not available, check power");
+		}
 
 		return false;
 	}
@@ -193,6 +215,8 @@ bool CCameraModule1::Initialize (void)
 
 		return false;
 	}
+
+	CDeviceNameService::Get ()->AddDevice (DeviceName, this, FALSE);
 
 	LOGNOTE ("Camera Module 1 initialized");
 
@@ -518,7 +542,10 @@ bool CCameraModule1::ReadReg8 (u16 usReg, u8 *pValue)
 	int nResult = m_I2CMaster.Write (OV5647_I2C_SLAVE_ADDRESS, &usReg, sizeof usReg);
 	if (nResult != sizeof usReg)
 	{
-		LOGWARN ("I2C write failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C write failed (%d)", nResult);
+		}
 
 		return false;
 	}
@@ -527,7 +554,10 @@ bool CCameraModule1::ReadReg8 (u16 usReg, u8 *pValue)
 	nResult = m_I2CMaster.Read (OV5647_I2C_SLAVE_ADDRESS, pValue, 1);
 	if (nResult != 1)
 	{
-		LOGWARN ("I2C read failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C read failed (%d)", nResult);
+		}
 
 		return false;
 	}
@@ -542,7 +572,10 @@ bool CCameraModule1::WriteReg8 (u16 usReg, u8 uchValue)
 	int nResult = m_I2CMaster.Write (OV5647_I2C_SLAVE_ADDRESS, Buffer, sizeof Buffer);
 	if (nResult != sizeof Buffer)
 	{
-		LOGWARN ("I2C write failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C write failed (%d)", nResult);
+		}
 
 		return false;
 	}
@@ -558,7 +591,10 @@ bool CCameraModule1::WriteReg16 (u16 usReg, u16 usValue)
 	int nResult = m_I2CMaster.Write (OV5647_I2C_SLAVE_ADDRESS, Buffer, sizeof Buffer);
 	if (nResult != sizeof Buffer)
 	{
-		LOGWARN ("I2C write failed (%d)", nResult);
+		if (!m_bIgnoreErrors)
+		{
+			LOGWARN ("I2C write failed (%d)", nResult);
+		}
 
 		return false;
 	}

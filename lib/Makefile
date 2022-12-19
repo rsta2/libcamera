@@ -4,7 +4,7 @@
 
 LIBCAMERAHOME = ..
 
-OBJS	= cameramodule1.o cameramodule2.o \
+OBJS	= cameramodule1.o cameramodule2.o cameramanager.o \
 	  cameradevice.o csi2cameradevice.o \
 	  cameracontrol.o camerabuffer.o camerainfo.o
 

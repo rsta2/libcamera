@@ -6,12 +6,11 @@ implemented and the image is not perfect. The program runs for one minute and
 halts then, after showing the frame rate in the log output, which is available
 via the serial interface (GPIO14 at 115200 Bps) only.
 
-You have to set your CAMERA_MODULE version (1 or 2) in the file ../config.h
-before build. You may also adjust some image parameters (e.g. width and height,
-vertical and horizontal flip) there. Especially the gain values are important
-for a good quality image under different light conditions on the Camera Module
-2. Camera Module 1 can adjust this automatically and these values do not count
-here. For width and height only the given combinations are supported.
+You may set some image parameters (e.g. width and height, vertical and
+horizontal flip) in the file ../config.h  before build. Especially the gain
+values are important for a good quality image under different light conditions
+on the Camera Module 2. Camera Module 1 can adjust this automatically and these
+values do not count here.
 
 On the Raspberry Pi 2 and newer models, it is recommended to create a file
 cmdline.txt on the SD card with this contents:

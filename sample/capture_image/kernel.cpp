@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: GPL-2.0
 //
 #include "kernel.h"
+#include "../config.h"
 #include <camera/camerabuffer.h>
 #include <circle/string.h>
 #include <circle/util.h>
@@ -27,12 +28,11 @@ CKernel::CKernel (void)
 	m_Logger (m_Options.GetLogLevel (), &m_Timer),
 	m_USBHCI (&m_Interrupt, &m_Timer),
 	m_EMMC (&m_Interrupt, &m_Timer, &m_ActLED),
-	m_Camera (&m_Interrupt),
+	m_CameraManager (&m_Interrupt),
+	m_pCamera (nullptr),
 	m_nExposure (EXPOSURE),
 	m_nAnalogGain (ANALOG_GAIN),
-#if CAMERA_MODULE == 2
 	m_nDigitalGain (DIGITAL_GAIN),
-#endif
 	m_pKeyboard (nullptr),
 	m_Action (ActionNone),
 	m_SelectedControl (CCameraDevice::ControlUnknown),
@@ -95,7 +95,7 @@ boolean CKernel::Initialize (void)
 
 	if (bOK)
 	{
-		bOK = m_Camera.Initialize ();
+		bOK = m_CameraManager.Initialize ();
 	}
 
 	return bOK;
@@ -104,6 +104,9 @@ boolean CKernel::Initialize (void)
 TShutdownMode CKernel::Run (void)
 {
 	LOGNOTE ("Compile time: " __DATE__ " " __TIME__);
+
+	m_pCamera = m_CameraManager.GetCamera ();
+	assert (m_pCamera);
 
 	// Get USB keyboard
 	m_pKeyboard = static_cast <CUSBKeyboardDevice *> (
@@ -122,34 +125,37 @@ TShutdownMode CKernel::Run (void)
 	}
 
 	// Set the wanted image format first
-	if (!m_Camera.SetFormat (WIDTH, HEIGHT))
+	if (!m_pCamera->SetFormat (WIDTH, HEIGHT))
 	{
 		LOGPANIC ("Cannot set format");
 	}
 
 	// Then allocate the image buffers
-	if (!m_Camera.AllocateBuffers ())
+	if (!m_pCamera->AllocateBuffers ())
 	{
 		LOGPANIC ("Cannot allocate buffers");
 	}
 
 	// Set the camera control values
-	m_Camera.SetControlValue (CCameraDevice::ControlVFlip, VFLIP);
-	m_Camera.SetControlValue (CCameraDevice::ControlHFlip, HFLIP);
+	m_pCamera->SetControlValue (CCameraDevice::ControlVFlip, VFLIP);
+	m_pCamera->SetControlValue (CCameraDevice::ControlHFlip, HFLIP);
 
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlExposure, m_nExposure);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlAnalogGain, m_nAnalogGain);
+	m_pCamera->SetControlValuePercent (CCameraDevice::ControlExposure, m_nExposure);
+	m_pCamera->SetControlValuePercent (CCameraDevice::ControlAnalogGain, m_nAnalogGain);
 
-#if CAMERA_MODULE == 1
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
-#else
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlDigitalGain, m_nDigitalGain);
-#endif
+	if (m_CameraManager.GetCameraModel () == CCameraManager::CameraModule1)
+	{
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
+	}
+	else
+	{
+		m_pCamera->SetControlValuePercent (CCameraDevice::ControlDigitalGain, m_nDigitalGain);
+	}
 
 	// Get and check the image format info
-	m_FormatInfo = m_Camera.GetFormatInfo ();
+	m_FormatInfo = m_pCamera->GetFormatInfo ();
 
 	TScreenColor *pRGBBuffer = new TScreenColor[m_FormatInfo.Width * m_FormatInfo.Height];
 	if (!pRGBBuffer)
@@ -158,7 +164,7 @@ TShutdownMode CKernel::Run (void)
 	}
 
 	// Start the image capture
-	if (!m_Camera.Start ())
+	if (!m_pCamera->Start ())
 	{
 		LOGPANIC ("Cannot start streaming");
 	}
@@ -170,7 +176,7 @@ TShutdownMode CKernel::Run (void)
 		CCameraBuffer *pBuffer;
 		do
 		{
-			pBuffer = m_Camera.GetNextBuffer ();
+			pBuffer = m_pCamera->GetNextBuffer ();
 		}
 		while (!pBuffer);
 
@@ -192,7 +198,7 @@ TShutdownMode CKernel::Run (void)
 			}
 		}
 
-		m_Camera.BufferProcessed ();
+		m_pCamera->BufferProcessed ();
 
 		switch (m_Action)
 		{
@@ -211,12 +217,10 @@ TShutdownMode CKernel::Run (void)
 				pControl = "analog gain";
 				break;
 
-#if CAMERA_MODULE == 2
 			case CCameraDevice::ControlDigitalGain:
 				pValue = &m_nDigitalGain;
 				pControl = "digital gain";
 				break;
-#endif
 
 			default:
 				assert (0);
@@ -225,7 +229,7 @@ TShutdownMode CKernel::Run (void)
 
 			LOGNOTE ("Set %s to %u%%", pControl, *pValue);
 
-			if (!m_Camera.SetControlValuePercent (m_SelectedControl, *pValue))
+			if (!m_pCamera->SetControlValuePercent (m_SelectedControl, *pValue))
 			{
 				LOGWARN ("Cannot set control value", pControl);
 			}
@@ -237,9 +241,9 @@ TShutdownMode CKernel::Run (void)
 			LOGNOTE ("Capture image");
 
 			// Return all buffers
-			while (m_Camera.GetNextBuffer ())
+			while (m_pCamera->GetNextBuffer ())
 			{
-				m_Camera.BufferProcessed ();
+				m_pCamera->BufferProcessed ();
 			}
 
 			// Get six buffers from the camera and take the last one
@@ -247,13 +251,13 @@ TShutdownMode CKernel::Run (void)
 			{
 				do
 				{
-					pBuffer = m_Camera.GetNextBuffer ();
+					pBuffer = m_pCamera->GetNextBuffer ();
 				}
 				while (!pBuffer);
 
 				if (i < 5)
 				{
-					m_Camera.BufferProcessed ();
+					m_pCamera->BufferProcessed ();
 				}
 			}
 
@@ -268,9 +272,9 @@ TShutdownMode CKernel::Run (void)
 			pBuffer->ConvertToRGB565 (pRGBBuffer);
 
 			// Return all buffers
-			while (m_Camera.GetNextBuffer ())
+			while (m_pCamera->GetNextBuffer ())
 			{
-				m_Camera.BufferProcessed ();
+				m_pCamera->BufferProcessed ();
 			}
 
 			// Find unused file name and save image
@@ -316,12 +320,12 @@ TShutdownMode CKernel::Run (void)
 	}
 
 	// Stop the camera
-	m_Camera.Stop ();
+	m_pCamera->Stop ();
 
 	delete [] pRGBBuffer;
 
 	// Free the camera buffers
-	m_Camera.FreeBuffers ();
+	m_pCamera->FreeBuffers ();
 
 	// Unmount file system
 	f_mount (0, DRIVE, 0);
@@ -346,11 +350,9 @@ void CKernel::ControlUpDown (int nUpDown)
 		pValue = &m_nAnalogGain;
 		break;
 
-#if CAMERA_MODULE == 2
 	case CCameraDevice::ControlDigitalGain:
 		pValue = &m_nDigitalGain;
 		break;
-#endif
 
 	default:
 		return;
@@ -386,12 +388,11 @@ void CKernel::KeyPressedHandler (const char *pString)
 	{
 		s_pThis->m_SelectedControl = CCameraDevice::ControlAnalogGain;
 	}
-#if CAMERA_MODULE == 2
-	else if (strcmp (pString, "d") == 0)
+	else if (   strcmp (pString, "d") == 0
+		 && s_pThis->m_CameraManager.GetCameraModel () == CCameraManager::CameraModule2)
 	{
 		s_pThis->m_SelectedControl = CCameraDevice::ControlDigitalGain;
 	}
-#endif
 	else if (   strcmp (pString, "+") == 0
 		 || strcmp (pString, "\x1B[A") == 0)	// Up
 	{

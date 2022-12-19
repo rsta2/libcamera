@@ -9,8 +9,6 @@
 #ifndef _config_h
 #define _config_h
 
-#define CAMERA_MODULE	2		// or 1
-
 // Supported image formats:
 //
 // Width x Height	Camera Module
@@ -22,21 +20,19 @@
 // 2592 x 1944		1
 // 3280 x 2464		2
 
-#define WIDTH		m_Screen.GetWidth()	// by default use the screen size
-#define HEIGHT		m_Screen.GetHeight()	// will be adjusted to nearest camera format
+#define WIDTH			m_Screen.GetWidth()	// by default use the screen size
+#define HEIGHT			m_Screen.GetHeight()	// will be adjusted to nearest camera format
 
-#define VFLIP		false
-#define HFLIP		false
+#define VFLIP			false			// set both to true, to rotate by 180 degrees
+#define HFLIP			false
 
-#define EXPOSURE	50	// percent
-#define ANALOG_GAIN	50	// percent
+#define EXPOSURE		50			// percent
+#define ANALOG_GAIN		50			// percent
 
-#if CAMERA_MODULE == 1
-	#define AUTO_EXPOSURE		true
-	#define AUTO_GAIN		true
-	#define AUTO_WHITE_BALANCE	true
-#else
-	#define DIGITAL_GAIN	50	// percent
-#endif
+#define DIGITAL_GAIN		50			// percent, Camera Module 2 only
+
+#define AUTO_EXPOSURE		true			// Camera Module 1 only
+#define AUTO_GAIN		true			// Camera Module 1 only
+#define AUTO_WHITE_BALANCE	true			// Camera Module 1 only
 
 #endif

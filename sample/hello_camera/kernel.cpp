@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: GPL-2.0
 //
 #include "kernel.h"
+#include "../config.h"
 #include <camera/camerabuffer.h>
 
 #if DEPTH != 16
@@ -19,7 +20,8 @@ CKernel::CKernel (void)
 :	m_Timer (&m_Interrupt),
 	m_Logger (m_Options.GetLogLevel (), &m_Timer),
 	m_Screen (m_Options.GetWidth (), m_Options.GetHeight ()),
-	m_Camera (&m_Interrupt)
+	m_CameraManager (&m_Interrupt),
+	m_pCamera (nullptr)
 {
 	m_ActLED.Blink (5);	// show we are alive
 }
@@ -65,7 +67,7 @@ boolean CKernel::Initialize (void)
 
 	if (bOK)
 	{
-		bOK = m_Camera.Initialize ();
+		bOK = m_CameraManager.Initialize ();
 	}
 
 	return bOK;
@@ -75,41 +77,47 @@ TShutdownMode CKernel::Run (void)
 {
 	LOGNOTE ("Compile time: " __DATE__ " " __TIME__);
 
+	m_pCamera = m_CameraManager.GetCamera ();
+	assert (m_pCamera);
+
 	// Set the wanted image format first
-	if (!m_Camera.SetFormat (WIDTH, HEIGHT))
+	if (!m_pCamera->SetFormat (WIDTH, HEIGHT))
 	{
 		LOGPANIC ("Cannot set format");
 	}
 
 	// Then allocate the image buffers
-	if (!m_Camera.AllocateBuffers ())
+	if (!m_pCamera->AllocateBuffers ())
 	{
 		LOGPANIC ("Cannot allocate buffers");
 	}
 
 	// Set the camera control values
-	m_Camera.SetControlValue (CCameraDevice::ControlVFlip, VFLIP);
-	m_Camera.SetControlValue (CCameraDevice::ControlHFlip, HFLIP);
+	m_pCamera->SetControlValue (CCameraDevice::ControlVFlip, VFLIP);
+	m_pCamera->SetControlValue (CCameraDevice::ControlHFlip, HFLIP);
 
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlExposure, EXPOSURE);
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlAnalogGain, ANALOG_GAIN);
+	m_pCamera->SetControlValuePercent (CCameraDevice::ControlExposure, EXPOSURE);
+	m_pCamera->SetControlValuePercent (CCameraDevice::ControlAnalogGain, ANALOG_GAIN);
 
-#if CAMERA_MODULE == 1
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
-	m_Camera.SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
-#else
-	m_Camera.SetControlValuePercent (CCameraDevice::ControlDigitalGain, DIGITAL_GAIN);
-#endif
+	if (m_CameraManager.GetCameraModel () == CCameraManager::CameraModule1)
+	{
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoExposure, AUTO_EXPOSURE);
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoGain, AUTO_GAIN);
+		m_pCamera->SetControlValue (CCameraDevice::ControlAutoWhiteBalance, AUTO_WHITE_BALANCE);
+	}
+	else
+	{
+		m_pCamera->SetControlValuePercent (CCameraDevice::ControlDigitalGain, DIGITAL_GAIN);
+	}
 
 	// Start the image capture
-	if (!m_Camera.Start ())
+	if (!m_pCamera->Start ())
 	{
 		LOGPANIC ("Cannot start streaming");
 	}
 
 	// Get and check the image format info
-	m_FormatInfo = m_Camera.GetFormatInfo ();
+	m_FormatInfo = m_pCamera->GetFormatInfo ();
 
 	// Use the image or display format, whatever is smaller
 	unsigned nMinWidth =   m_FormatInfo.Width <= m_Screen.GetWidth ()
@@ -128,7 +136,7 @@ TShutdownMode CKernel::Run (void)
 	while (m_Timer.GetUptime () < 60)	// Run for 1 minute
 	{
 		// Get the next buffer from the camera
-		CCameraBuffer *pBuffer = m_Camera.GetNextBuffer ();
+		CCameraBuffer *pBuffer = m_pCamera->GetNextBuffer ();
 		if (!pBuffer)
 		{
 			continue;		// No buffer available yet
@@ -144,7 +152,7 @@ TShutdownMode CKernel::Run (void)
 		}
 
 		// Free the buffer to be reused
-		m_Camera.BufferProcessed ();
+		m_pCamera->BufferProcessed ();
 
 		nFrames++;
 
@@ -161,10 +169,10 @@ TShutdownMode CKernel::Run (void)
 	LOGNOTE ("Frame rate was %.1f Hz", nFrames / fSeconds);
 
 	// Stop the camera
-	m_Camera.Stop ();
+	m_pCamera->Stop ();
 
 	// Free the camera buffers
-	m_Camera.FreeBuffers ();
+	m_pCamera->FreeBuffers ();
 
 	// Clear the display
 	m_Screen.ClearScreen (BLACK_COLOR);

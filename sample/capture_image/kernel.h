@@ -23,9 +23,7 @@
 #include <circle/types.h>
 #include <SDCard/emmc.h>
 #include <fatfs/ff.h>
-#include <camera/cameramodule1.h>
-#include <camera/cameramodule2.h>
-#include "../config.h"
+#include <camera/cameramanager.h>
 
 enum TShutdownMode
 {
@@ -71,18 +69,13 @@ private:
 	CEMMCDevice		m_EMMC;
 	FATFS			m_FileSystem;
 
-#if CAMERA_MODULE == 1
-	CCameraModule1		m_Camera;
-#else
-	CCameraModule2		m_Camera;
-#endif
+	CCameraManager		m_CameraManager;
+	CCameraDevice		*m_pCamera;
 	CCameraDevice::TFormatInfo m_FormatInfo;
 
 	unsigned		m_nExposure;
 	unsigned 		m_nAnalogGain;
-#if CAMERA_MODULE == 2
 	unsigned 		m_nDigitalGain;
-#endif
 
 	CUSBKeyboardDevice	*m_pKeyboard;
 
