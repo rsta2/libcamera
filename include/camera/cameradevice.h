@@ -192,8 +192,14 @@ public:
 	/// \brief Get the next frame buffer, which is ready to process (filled with data)
 	/// \return Pointer to the buffer instance (or nullptr, if no buffer is available)
 	CCameraBuffer *GetNextBuffer (void);
-	/// \brief Return a previously processed buffer to the buffer queue
+	/// \brief Wait for the next frame buffer, which is ready to process (filled with data)
+	/// \param nTimeoutMs Timeout in milliseconds (0 for forever)
+	/// \return Pointer to the buffer instance (or nullptr on timeout)
+	CCameraBuffer *WaitForNextBuffer (unsigned nTimeoutMs = 1000);
+	/// \brief Return one (previously processed) buffer to the buffer queue
 	void BufferProcessed (void);
+	/// \brief Return all ready buffers to the buffer queue
+	void FlushBuffers (void);
 
 	/// \brief Register a callback, which gets called, when a buffer is ready to process
 	/// \param pHandler Pointer to the handler (nullptr to unregister)

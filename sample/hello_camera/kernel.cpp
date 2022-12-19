@@ -136,18 +136,22 @@ TShutdownMode CKernel::Run (void)
 	while (m_Timer.GetUptime () < 60)	// Run for 1 minute
 	{
 		// Get the next buffer from the camera
-		CCameraBuffer *pBuffer = m_pCamera->GetNextBuffer ();
+		CCameraBuffer *pBuffer = m_pCamera->WaitForNextBuffer ();
 		if (!pBuffer)
 		{
-			continue;		// No buffer available yet
+			LOGPANIC ("Timeout while waiting for buffer");
 		}
 
-		// Convert and draw image
-		for (unsigned y = 0; y < nMinHeight; y++)
+		// Ignore the first frames, because they may contain invalid data
+		if (pBuffer->GetSequenceNumber () > 5)
 		{
-			for (unsigned x = 0; x < nMinWidth; x++)
+			// Convert and draw image
+			for (unsigned y = 0; y < nMinHeight; y++)
 			{
-				m_Screen.DrawPixel (x, y, pBuffer->GetPixelRGB565 (x, y));
+				for (unsigned x = 0; x < nMinWidth; x++)
+				{
+					m_Screen.DrawPixel (x, y, pBuffer->GetPixelRGB565 (x, y));
+				}
 			}
 		}
 

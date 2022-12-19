@@ -408,7 +408,8 @@ void CCSI2CameraDevice::InterruptHandler (void)
 
 		if (m_pCurrentBuffer)
 		{
-			m_pCurrentBuffer->SetTimestamp (CTimer::Get ()->GetClockTicks ());
+			m_pCurrentBuffer->SetTimestamp (  CTimer::Get ()->GetClockTicks ()
+							/ (CLOCKHZ / 1000000));
 
 			assert (m_nImageSize);
 			uintptr nDMAAddress = m_pCurrentBuffer->GetDMAAddress ();

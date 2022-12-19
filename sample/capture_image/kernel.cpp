@@ -173,12 +173,19 @@ TShutdownMode CKernel::Run (void)
 	while (bContinue)
 	{
 		// Wait for available buffer from camera
-		CCameraBuffer *pBuffer;
-		do
+		CCameraBuffer *pBuffer = m_pCamera->WaitForNextBuffer ();
+		if (!pBuffer)
 		{
-			pBuffer = m_pCamera->GetNextBuffer ();
+			LOGPANIC ("Timeout while waiting for buffer");
 		}
-		while (!pBuffer);
+
+		// Ignore the first frames, because they may contain invalid data
+		if (pBuffer->GetSequenceNumber () < 5)
+		{
+			m_pCamera->BufferProcessed ();
+
+			continue;
+		}
 
 		// Optionally apply white balancing
 		if (m_bWhiteBalance)
@@ -241,19 +248,16 @@ TShutdownMode CKernel::Run (void)
 			LOGNOTE ("Capture image");
 
 			// Return all buffers
-			while (m_pCamera->GetNextBuffer ())
-			{
-				m_pCamera->BufferProcessed ();
-			}
+			m_pCamera->FlushBuffers ();
 
 			// Get six buffers from the camera and take the last one
 			for (unsigned i = 0; i < 6; i++)
 			{
-				do
+				pBuffer = m_pCamera->WaitForNextBuffer ();
+				if (!pBuffer)
 				{
-					pBuffer = m_pCamera->GetNextBuffer ();
+					LOGPANIC ("Timeout while waiting for buffer");
 				}
-				while (!pBuffer);
 
 				if (i < 5)
 				{
@@ -272,10 +276,7 @@ TShutdownMode CKernel::Run (void)
 			pBuffer->ConvertToRGB565 (pRGBBuffer);
 
 			// Return all buffers
-			while (m_pCamera->GetNextBuffer ())
-			{
-				m_pCamera->BufferProcessed ();
-			}
+			m_pCamera->FlushBuffers ();
 
 			// Find unused file name and save image
 			for (unsigned i = 1; i < 100; i++)

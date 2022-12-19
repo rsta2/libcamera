@@ -8,7 +8,10 @@
 //
 #include <camera/cameradevice.h>
 #include <camera/camerabuffer.h>
+#include <circle/sched/scheduler.h>
+#include <circle/sysconfig.h>
 #include <circle/atomic.h>
+#include <circle/timer.h>
 
 CCameraDevice::CCameraDevice (void)
 :	m_nBuffers (0),
@@ -110,9 +113,36 @@ CCameraBuffer *CCameraDevice::GetNextBuffer (void)
 	return pBuffer;
 }
 
+CCameraBuffer *CCameraDevice::WaitForNextBuffer (unsigned nTimeoutMs)
+{
+	CTimer *pTimer = CTimer::Get ();
+	unsigned nStartTicks = pTimer->GetClockTicks ();
+
+	CCameraBuffer *pBuffer = nullptr;
+	while (!(pBuffer = GetNextBuffer ()))
+	{
+		if (   nTimeoutMs
+		    && (pTimer->GetClockTicks () - nStartTicks) >= nTimeoutMs * (CLOCKHZ / 1000))
+		{
+			break;
+		}
+
+#ifdef NO_BUSY_WAIT
+		CScheduler::Get ()->Yield ();
+#endif
+	}
+
+	return pBuffer;
+}
+
 void CCameraDevice::BufferProcessed (void)
 {
 	AtomicSet (&m_nOutPtr, (AtomicGet (&m_nOutPtr) + 1) % m_nBuffers);
+}
+
+void CCameraDevice::FlushBuffers (void)
+{
+	AtomicSet (&m_nOutPtr, AtomicGet (&m_nInPtr));
 }
 
 void CCameraDevice::RegisterBufferReadyHandler (TBufferReadyHandler *pHandler, void *pParam)
