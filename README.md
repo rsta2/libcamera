@@ -58,6 +58,12 @@ The built kernel image can be installed as described in the main Circle *README.
 Documentation
 -------------
 
+The camera API is defined by the public interface of the following classes:
+
+* CCameraManager (Camera initialization and auto-probing)
+* CCameraBuffer (Manages access to a captured frame (image) from a camera)
+* CCameraDevice (everything else)
+
 If you have Doxygen installed on your computer, you can build the libcamera documentation with:
 
 	./makedoc

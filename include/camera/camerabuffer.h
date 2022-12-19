@@ -12,28 +12,19 @@
 #include <camera/cameradevice.h>
 #include <circle/types.h>
 
-class CCameraBuffer
+class CCameraBuffer	/// API: Manages access to a captured frame (image) from a camera
 {
 public:
 	CCameraBuffer (void);
 	~CCameraBuffer (void);
 
-	bool Setup (size_t nSize);
-
-	void *GetPtr (void) const;
-	uintptr GetDMAAddress (void) const;
-
-	void SetSequenceNumber (unsigned nSequence);
-	unsigned GetSequenceNumber (void) const;
-
-	void SetTimestamp (unsigned nTimestamp);
-	unsigned GetTimestamp (void) const;
-
-	void SetFormat (unsigned nWidth, unsigned nHeight, unsigned nBytesPerLine,
-			CCameraDevice::TFormatCode Format);
-
+	/// \param x 0-based horizontal pixel coordinate
+	/// \param y 0-based vertical pixel coordinate
+	/// \return RGB565-coded color of this pixel
 	u16 GetPixelRGB565 (unsigned x, unsigned y);
 
+	/// \brief Convert frame to RGB565-coded image
+	/// \param pOutBuffer Write image to this location in main memory
 	void ConvertToRGB565 (void *pOutBuffer);
 
 	/// \brief Apply white balance algorithm (improved White Patch method)
@@ -42,7 +33,26 @@ public:
 	/// \note See: N. Banic, S. Loncaric: Improving the White Patch method by sampling
 	void WhiteBalance (unsigned N = 50, unsigned M = 10);
 
+	/// \return 0-based sequence number of the frame
+	unsigned GetSequenceNumber (void) const;
+	/// \return Microseconds timestamp of the frame
+	unsigned GetTimestamp (void) const;
+
+	/// \return Pointer to the frame buffer
+	/// \note The image is in unpacked 10-bit Bayer format. One pixel occupies two bytes.
+	void *GetPtr (void) const;
+
+private:
+	bool Setup (size_t nSize);
 	void InvalidateCache (void);
+	friend class CCameraDevice;
+
+	uintptr GetDMAAddress (void) const;
+	void SetSequenceNumber (unsigned nSequence);
+	void SetTimestamp (unsigned nTimestamp);
+	void SetFormat (unsigned nWidth, unsigned nHeight, unsigned nBytesPerLine,
+			CCameraDevice::TFormatCode Format);
+	friend class CCSI2CameraDevice;
 
 private:
 	size_t m_nSize;

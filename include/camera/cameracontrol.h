@@ -12,13 +12,14 @@
 class CCameraControl
 {
 public:
+	/// \brief API: Describes a camera control
 	struct TControlInfo
 	{
-		bool Supported;
-		int Min;
-		int Max;
-		int Step;
-		int Default;
+		bool Supported;		///< Is it supported by this camera?
+		int Min;		///< Minimum value
+		int Max;		///< Maximum value
+		int Step;		///< Value must be a multiple of this (currently always 1)
+		int Default;		///< Default value
 	};
 
 public:

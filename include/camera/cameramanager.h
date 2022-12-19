@@ -14,7 +14,7 @@
 #include <circle/interrupt.h>
 #include <circle/types.h>
 
-class CCameraManager		/// Auto-probes for an available camera
+class CCameraManager		/// API: Auto-probes for an available camera
 {
 public:
 	enum TCameraModel
@@ -28,10 +28,14 @@ public:
 	CCameraManager (CInterruptSystem *pInterrupt);
 	~CCameraManager (void);
 
+	/// \brief Auto-probe for a camera and initialize it
+	/// \return Camera found and ready for operation?
 	bool Initialize (void);
 
+	/// \return Which camera model is in use?
 	TCameraModel GetCameraModel (void) const;
 
+	/// \return Pointer to the camera instance
 	CCameraDevice *GetCamera (void) const;
 
 private:
