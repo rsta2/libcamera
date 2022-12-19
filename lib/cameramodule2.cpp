@@ -264,7 +264,7 @@ bool CCameraModule2::Initialize (void)
 	return true;
 }
 
-bool CCameraModule2::Start (void)
+bool CCameraModule2::Start (bool bLEDOn)
 {
 	assert (m_pMode);
 	if (!WriteRegs (m_pMode->RegList))

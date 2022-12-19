@@ -25,7 +25,7 @@ public:
 	bool Probe (void);
 	bool Initialize (void);
 
-	bool Start (void);
+	bool Start (bool bLEDOn = true);
 	void Stop (void);
 
 	bool IsControlSupported (TControl Control) const;
@@ -71,6 +71,7 @@ private:
 	CCameraInfo m_CameraInfo;
 	CI2CMaster m_I2CMaster;
 	CGPIOPin m_PowerGPIOPin;
+	CGPIOPin m_LEDGPIOPin;
 
 	bool m_bPoweredOn;
 

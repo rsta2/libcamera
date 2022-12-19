@@ -127,7 +127,7 @@ public:
 	// Must not be called, when streaming active
 	virtual bool SetFormat (unsigned nWidth, unsigned nHeight, unsigned nDepth = 10) = 0;
 
-	virtual bool Start (void) = 0;
+	virtual bool Start (bool bLEDOn = true) = 0;
 	virtual void Stop (void) = 0;
 
 	virtual TFormatInfo GetFormatInfo (void) const = 0;

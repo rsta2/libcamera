@@ -223,7 +223,7 @@ bool CCameraModule1::Initialize (void)
 	return true;
 }
 
-bool CCameraModule1::Start (void)
+bool CCameraModule1::Start (bool bLEDOn)
 {
 	assert (m_pMode);
 
@@ -298,6 +298,14 @@ bool CCameraModule1::Start (void)
 		return false;
 	}
 
+	unsigned nLEDPin = m_CameraInfo.GetLEDPin ();
+	if (nLEDPin)
+	{
+		m_LEDGPIOPin.AssignPin (nLEDPin);
+		m_LEDGPIOPin.SetMode (GPIOModeOutput, false);
+		m_LEDGPIOPin.Write (bLEDOn ? HIGH : LOW);
+	}
+
 	LOGDBG ("Streaming started (%ux%u, %s)",
 		m_pMode->Width, m_pMode->Height,
 		(const char *) FormatToString (m_LogicalFormat));
@@ -307,6 +315,11 @@ bool CCameraModule1::Start (void)
 
 void CCameraModule1::Stop (void)
 {
+	if (m_CameraInfo.GetLEDPin ())
+	{
+		m_LEDGPIOPin.SetMode (GPIOModeInput, false);
+	}
+
 	if (   !WriteReg8 (OV5647_REG_MIPI_CTRL00,   MIPI_CTRL00_CLOCK_LANE_GATE
 						   | MIPI_CTRL00_BUS_IDLE
 						   | MIPI_CTRL00_CLOCK_LANE_DISABLE)

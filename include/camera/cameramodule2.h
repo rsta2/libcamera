@@ -36,7 +36,7 @@ public:
 	bool Probe (void);
 	bool Initialize (void);
 
-	bool Start (void);
+	bool Start (bool bLEDOn = true);
 	void Stop (void);
 
 	bool IsControlSupported (TControl Control) const;
