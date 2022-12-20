@@ -10,10 +10,6 @@
 #include "../config.h"
 #include <camera/camerabuffer.h>
 
-#if DEPTH != 16
-	#error Screen DEPTH must be 16!
-#endif
-
 LOGMODULE ("kernel");
 
 CKernel::CKernel (void)
@@ -150,7 +146,20 @@ TShutdownMode CKernel::Run (void)
 			{
 				for (unsigned x = 0; x < nMinWidth; x++)
 				{
-					m_Screen.DrawPixel (x, y, pBuffer->GetPixelRGB565 (x, y));
+#if DEPTH == 16
+					TScreenColor Color = pBuffer->GetPixelRGB565 (x, y);
+#elif DEPTH == 32
+					TScreenColor Color = pBuffer->GetPixelRGB888 (x, y);
+					// convert RGB to BGRA, used on screen
+					Color = COLOR32 (Color & 0xFF,
+							 Color >> 8 & 0xFF,
+							 Color >> 16 & 0xFF,
+							 0xFF);			// alpha channel
+#else
+	#error Screen DEPTH must be 16 or 32!
+#endif
+
+					m_Screen.DrawPixel (x, y, Color);
 				}
 			}
 		}

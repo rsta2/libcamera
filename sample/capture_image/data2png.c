@@ -1,7 +1,7 @@
 //
 // data2png.c
 //
-// Converts RGB565 raw image files to PNG files
+// Converts RGB88 raw image files to PNG files
 // Requires LibGD (https://libgd.github.io/) for build
 //
 #include <stdio.h>
@@ -11,7 +11,7 @@
 #define WIDTH	640
 #define HEIGHT	480
 
-typedef unsigned short color_t;
+typedef unsigned char color_t[3];
 typedef color_t image_t[HEIGHT][WIDTH];
 
 int main (int argc, char **argv)
@@ -54,17 +54,11 @@ int main (int argc, char **argv)
 	{
 		for (int x = 0; x < WIDTH; x++)
 		{
-			color_t colorin = (*buf)[y][x];
+			unsigned char red   = (*buf)[y][x][0];
+			unsigned char green = (*buf)[y][x][1];
+			unsigned char blue  = (*buf)[y][x][2];
 
-			unsigned colorout = 0xFFFFFF;
-			if (colorin != 0xFFFF)
-			{
-				unsigned red   = ((colorin >> 11) & 0x1F) << 3;
-				unsigned green = ((colorin >> 5)  & 0x3F) << 2;
-				unsigned blue  = ((colorin >> 0)  & 0x1F) << 3;
-
-				colorout = blue | green << 8 | red << 16;
-			}
+			unsigned colorout = blue | green << 8 | red << 16;
 
 			gdImageSetPixel (im, x, y, colorout);
 		}

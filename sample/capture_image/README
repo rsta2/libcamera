@@ -1,7 +1,7 @@
 README
 
 This sample program allows to capture an image with the camera and save it to
-the SD card in a raw RGB565 format. You have to attach an USB PC keyboard to use
+the SD card in a raw RGB888 format. You have to attach an USB PC keyboard to use
 it. The program displays a preview image, so that you can adjust the camera
 controls exposure, analog gain and digital gain with the keyboard, before
 capturing the image. You may adjust the parameters image width and height,
@@ -31,8 +31,8 @@ The supported country codes (CC) are: DE, ES, FR, IT, UK and US.
 
 The created .data image files can be opened for example in the GNU Image
 Manipulation Program (GIMP). You have to specify the Width and Height of the
-image, as given in the file name and the Image type RGB565 (little endian) in
-the open dialog window.
+image, as given in the file name and the Image type RGB in the open dialog
+window.
 
 Alternatively you can convert the .data files to .png files with the provided
 data2png tool. It requires LibGD (https://libgd.github.io/) installed for build.
@@ -40,4 +40,4 @@ You may have to adjust the image WIDTH and HEIGHT (default 640x480) in the file
 data2png.c before build. Then just enter:
 
 	make data2png
-	./data2png image-640x480-rgb565-01.data image-01.png
+	./data2png image-640x480-rgb888-01.data image-01.png

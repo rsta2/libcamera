@@ -14,10 +14,6 @@
 
 #define DRIVE		"SD:"
 
-#if DEPTH != 16
-	#error Screen DEPTH must be 16!
-#endif
-
 LOGMODULE ("kernel");
 
 CKernel *CKernel::s_pThis = nullptr;
@@ -157,7 +153,7 @@ TShutdownMode CKernel::Run (void)
 	// Get and check the image format info
 	m_FormatInfo = m_pCamera->GetFormatInfo ();
 
-	TScreenColor *pRGBBuffer = new TScreenColor[m_FormatInfo.Width * m_FormatInfo.Height];
+	u8 *pRGBBuffer = new u8[m_FormatInfo.Width * m_FormatInfo.Height * 3];
 	if (!pRGBBuffer)
 	{
 		LOGPANIC ("Cannot allocate RGB buffer");
@@ -200,8 +196,20 @@ TShutdownMode CKernel::Run (void)
 		{
 			for (unsigned x = 0; x < m_FormatInfo.Width; x += nSizeFactor)
 			{
-				m_Screen.SetPixel (x0 + x / nSizeFactor, y / nSizeFactor,
-						   pBuffer->GetPixelRGB565 (x, y));
+#if DEPTH == 16
+				TScreenColor Color = pBuffer->GetPixelRGB565 (x, y);
+#elif DEPTH == 32
+				TScreenColor Color = pBuffer->GetPixelRGB888 (x, y);
+				// convert RGB to BGRA, used on screen
+				Color = COLOR32 (Color & 0xFF,
+						 Color >> 8 & 0xFF,
+						 Color >> 16 & 0xFF,
+						 0xFF);			// alpha channel
+#else
+	#error Screen DEPTH must be 16 or 32!
+#endif
+
+				m_Screen.SetPixel (x0 + x / nSizeFactor, y / nSizeFactor, Color);
 			}
 		}
 
@@ -272,8 +280,8 @@ TShutdownMode CKernel::Run (void)
 				pBuffer->WhiteBalance ();
 			}
 
-			// Convert image to RGB565
-			pBuffer->ConvertToRGB565 (pRGBBuffer);
+			// Convert image to RGB888
+			pBuffer->ConvertToRGB888 (pRGBBuffer);
 
 			// Return all buffers
 			m_pCamera->FlushBuffers ();
@@ -282,7 +290,7 @@ TShutdownMode CKernel::Run (void)
 			for (unsigned i = 1; i < 100; i++)
 			{
 				CString Filename;
-				Filename.Format ("%s/image-%ux%u-rgb565-%02u.data",
+				Filename.Format ("%s/image-%ux%u-rgb888-%02u.data",
 						 DRIVE, m_FormatInfo.Width, m_FormatInfo.Height, i);
 
 				FIL File;
@@ -293,7 +301,7 @@ TShutdownMode CKernel::Run (void)
 					unsigned nBytesWritten;
 					if (f_write (&File, pRGBBuffer,   m_FormatInfo.Width
 									* m_FormatInfo.Height
-									* sizeof (TScreenColor),
+									* 3,
 						     &nBytesWritten) != FR_OK)
 					{
 						LOGWARN ("Write error");

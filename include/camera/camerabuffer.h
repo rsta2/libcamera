@@ -15,14 +15,34 @@
 class CCameraBuffer	/// API: Manages access to a captured frame (image) from a camera
 {
 public:
+	struct TPixel
+	{
+		u16	R;
+		u16	G;
+		u16	B;
+	};
+
+public:
 	CCameraBuffer (void);
 	~CCameraBuffer (void);
 
 	/// \param x 0-based horizontal pixel coordinate
 	/// \param y 0-based vertical pixel coordinate
+	/// \return Color components of this pixel (depth bits valid)
+	TPixel GetPixel (unsigned x, unsigned y);
+
+	/// \param x 0-based horizontal pixel coordinate
+	/// \param y 0-based vertical pixel coordinate
+	/// \return RGB888-coded color of this pixel
+	u32 GetPixelRGB888 (unsigned x, unsigned y);
+	/// \brief Convert frame to RGB888-coded image
+	/// \param pOutBuffer Write image to this location in main memory
+	void ConvertToRGB888 (void *pOutBuffer);
+
+	/// \param x 0-based horizontal pixel coordinate
+	/// \param y 0-based vertical pixel coordinate
 	/// \return RGB565-coded color of this pixel
 	u16 GetPixelRGB565 (unsigned x, unsigned y);
-
 	/// \brief Convert frame to RGB565-coded image
 	/// \param pOutBuffer Write image to this location in main memory
 	void ConvertToRGB565 (void *pOutBuffer);
@@ -66,7 +86,7 @@ private:
 	unsigned m_nBytesPerLine;
 	CCameraDevice::TFormatCode m_Format;
 
-	unsigned m_ColorFactor[3];
+	unsigned m_ColorFactor[3];	// R, G, B
 	unsigned m_nSeed;
 };
 

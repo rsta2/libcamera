@@ -147,7 +147,7 @@ bool CCSI2CameraDevice::SetFormat (unsigned nWidth, unsigned nHeight, unsigned n
 
 	m_nImageSize = m_nHeight * m_nBytesPerLine;
 
-	LOGDBG ("Image size is %lu (line %u)", m_nImageSize, m_nBytesPerLine);
+	//LOGDBG ("Image size is %lu (line %u)", m_nImageSize, m_nBytesPerLine);
 
 	return true;
 }

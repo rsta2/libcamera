@@ -88,27 +88,25 @@ void CCameraBuffer::SetFormat (unsigned nWidth, unsigned nHeight, unsigned nByte
 }
 
 // This method reads the color values from a captured image in Bayer format
-// (normally 16 bits occupied per value, 10 bits valid) and  returns a RGB565
-// value.
-u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
+// (normally 16 bits occupied per value, 10 bits valid) and  returns the
+// color components.
+CCameraBuffer::TPixel CCameraBuffer::GetPixel (unsigned x, unsigned y)
 {
 	// We ignore the border lines/cols to make the processing more simple.
 	if (   x == 0 || x >= m_nWidth-1
 	    || y == 0 || y >= m_nHeight-1)
 	{
-		return 0;
+		return {0, 0, 0};
 	}
 
 	typedef u16 TImage[][m_nBytesPerLine / sizeof (u16)];
 	TImage *p = reinterpret_cast<TImage *> (m_pBuffer);
 
-	unsigned nShift = CCameraDevice::GetFormatDepth (m_Format) - 5;
+	// L(x, y) is the color value at position x / y
+	#define L(x, y) ((*(p))[(y)][(x)])
 
-	// L(x, y) is the color value at position x/y, shifted to the range 0 to 31.
-	#define L(x, y) ((*(p))[(y)][(x)] >> (nShift))
-
-	u8 CL = L (x, y);
-	u8 CR, CG, CB;
+	u16 CL = L (x, y);
+	u16 CR, CG, CB;
 
 	// For interpolating the missing color values see:
 	// http://siliconimaging.com/RGB%20Bayer.htm
@@ -139,16 +137,62 @@ u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
 		break;
 	}
 
-	CR = CR * m_ColorFactor[0] >> 16;
-	CG = CG * m_ColorFactor[1] >> 16;
-	CB = CB * m_ColorFactor[2] >> 16;
+	return {CR, CG, CB};
+}
+
+u32 CCameraBuffer::GetPixelRGB888 (unsigned x, unsigned y)
+{
+	const TPixel Pixel = GetPixel (x, y);
+
+	unsigned nShift = CCameraDevice::GetFormatDepth (m_Format) - 8 + 16;
+	u16 CR = Pixel.R * m_ColorFactor[0] >> nShift;
+	u16 CG = Pixel.G * m_ColorFactor[1] >> nShift;
+	u16 CB = Pixel.B * m_ColorFactor[2] >> nShift;
+
+	if (CR > 255) CR = 255;
+	if (CG > 255) CG = 255;
+	if (CB > 255) CB = 255;
+
+	return (CB << 16) | (CG << 8) | CR;
+}
+
+void CCameraBuffer::ConvertToRGB888 (void *pOutBuffer)
+{
+	assert (m_nWidth);
+	assert (m_nHeight);
+
+	u8 *p = static_cast<u8 *> (pOutBuffer);
+	assert (p);
+
+	for (unsigned y = 0; y < m_nHeight; y++)
+	{
+		for (unsigned x = 0; x < m_nWidth; x++)
+		{
+			const u32 nPixel = GetPixelRGB888 (x, y);
+
+			p[0] = nPixel & 0xFF;
+			p[1] = (nPixel >> 8) & 0xFF;
+			p[2] = (nPixel >> 16) & 0xFF;
+
+			p += 3;
+		}
+	}
+}
+
+u16 CCameraBuffer::GetPixelRGB565 (unsigned x, unsigned y)
+{
+	const TPixel Pixel = GetPixel (x, y);
+
+	unsigned nShift = CCameraDevice::GetFormatDepth (m_Format) - 5 + 16;
+	u16 CR = Pixel.R * m_ColorFactor[0] >> nShift;
+	u16 CG = Pixel.G * m_ColorFactor[1] >> (nShift - 1);
+	u16 CB = Pixel.B * m_ColorFactor[2] >> nShift;
 
 	if (CR > 31) CR = 31;
-	if (CG > 31) CG = 31;
+	if (CG > 63) CG = 63;
 	if (CB > 31) CB = 31;
 
-	// Normally (CG << 5), but to have a 0-31 range for all colors.
-	return (CR << 11) | (CG << 6) | CB;
+	return (CR << 11) | (CG << 5) | CB;
 }
 
 void CCameraBuffer::ConvertToRGB565 (void *pOutBuffer)
@@ -194,22 +238,11 @@ void CCameraBuffer::WhiteBalance (unsigned N, unsigned M)
 			unsigned x = 1 + rand_r (&m_nSeed) * (m_nWidth - 2) / RAND_MAX;
 			unsigned y = 1 + rand_r (&m_nSeed) * (m_nHeight - 2) / RAND_MAX;
 
-			const u16 usPixel = GetPixelRGB565 (x, y);
+			const TPixel Pixel = GetPixel (x, y);
 
-			if (Max[0] < (usPixel >> 11))
-			{
-				Max[0] = usPixel >> 11;
-			}
-
-			if (Max[1] < ((usPixel >> 6) & 0x1F))
-			{
-				Max[1] = (usPixel >> 6) & 0x1F;
-			}
-
-			if (Max[2] < (usPixel & 0x1F))
-			{
-				Max[2] = usPixel & 0x1F;
-			}
+			if (Max[0] < Pixel.R) Max[0] = Pixel.R;
+			if (Max[1] < Pixel.G) Max[1] = Pixel.G;
+			if (Max[2] < Pixel.B) Max[2] = Pixel.B;
 		}
 
 		Result[0] += Max[0];
