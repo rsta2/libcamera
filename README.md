@@ -1,6 +1,8 @@
 libcamera
 =========
 
+> Raspberry Pi is a trademark of Raspberry Pi Ltd.
+
 This project provides camera support for Circle-based applications. Only cameras with CSI-2 interface are supported. The drivers in this project directly access the hardware, without using MMAL / VCHIQ software components. There are no specific settings in the file *config.txt* necessary.
 
 Status
