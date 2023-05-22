@@ -8,7 +8,7 @@ This project provides camera support for Circle-based applications. Only cameras
 Status
 ------
 
-This is work in progress. Currently the Raspberry Pi Camera Module 1 (with OV5647 sensor) and Camera Module 2 (with IMX219 sensor) are supported, connected to the camera connector of the following Raspberry Pi models:
+Currently the Raspberry Pi Camera Module 1 (with OV5647 sensor) and Camera Module 2 (with IMX219 sensor) are supported, connected to the camera connector of the following Raspberry Pi models:
 
 * Raspberry Pi Model B (Release 2 with 512 MB)
 * Raspberry Pi Model A+
