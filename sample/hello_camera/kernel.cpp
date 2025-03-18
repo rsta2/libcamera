@@ -2,7 +2,7 @@
 // kernel.cpp
 //
 // libcamera - Camera support for Circle
-// Copyright (C) 2022  Rene Stange <rsta2@o2online.de>
+// Copyright (C) 2022-2025  Rene Stange <rsta2@o2online.de>
 //
 // SPDX-License-Identifier: GPL-2.0
 //
@@ -122,9 +122,9 @@ TShutdownMode CKernel::Run (void)
 			     ? m_FormatInfo.Height : m_Screen.GetHeight ();
 
 	// Clear both display areas
-	m_Screen.ClearScreen (BLACK_COLOR);
+	m_Screen.ClearScreen (CDisplay::Black);
 	m_Screen.UpdateDisplay ();
-	m_Screen.ClearScreen (BLACK_COLOR);
+	m_Screen.ClearScreen (CDisplay::Black);
 
 	unsigned nFrames = 0;
 	unsigned nStartTicks = m_Timer.GetClockTicks ();
@@ -146,18 +146,11 @@ TShutdownMode CKernel::Run (void)
 			{
 				for (unsigned x = 0; x < nMinWidth; x++)
 				{
-#if DEPTH == 16
-					TScreenColor Color = pBuffer->GetPixelRGB565 (x, y);
-#elif DEPTH == 32
-					TScreenColor Color = pBuffer->GetPixelRGB888 (x, y);
-					// convert RGB to BGRA, used on screen
-					Color = COLOR32 (Color & 0xFF,
-							 Color >> 8 & 0xFF,
-							 Color >> 16 & 0xFF,
-							 0xFF);			// alpha channel
-#else
-	#error Screen DEPTH must be 16 or 32!
-#endif
+					u32 nColor = pBuffer->GetPixelRGB888 (x, y);
+					// Convert to logical screen color
+					T2DColor Color = COLOR2D (nColor & 0xFF,
+								  nColor >> 8 & 0xFF,
+								  nColor >> 16 & 0xFF);
 
 					m_Screen.DrawPixel (x, y, Color);
 				}
@@ -188,7 +181,7 @@ TShutdownMode CKernel::Run (void)
 	m_pCamera->FreeBuffers ();
 
 	// Clear the display
-	m_Screen.ClearScreen (BLACK_COLOR);
+	m_Screen.ClearScreen (CDisplay::Black);
 	m_Screen.UpdateDisplay ();
 
 	return ShutdownHalt;
