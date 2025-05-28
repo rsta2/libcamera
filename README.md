@@ -13,6 +13,7 @@ Currently the Raspberry Pi Camera Module 1 (with OV5647 sensor) and Camera Modul
 * Raspberry Pi Model B (Release 2 with 512 MB)
 * Raspberry Pi Model A+
 * Raspberry Pi Model B+
+* Raspberry Pi Zero (v1.3 only)
 * Raspberry Pi Zero W
 * Raspberry Pi Zero 2 W
 * Raspberry Pi 2 Model B

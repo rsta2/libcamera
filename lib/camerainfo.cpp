@@ -2,7 +2,7 @@
 // camerainfo.cpp
 //
 // libcamera - Camera support for Circle
-// Copyright (C) 2022  Rene Stange <rsta2@o2online.de>
+// Copyright (C) 2022-2025  Rene Stange <rsta2@gmx.net>
 //
 // SPDX-License-Identifier: GPL-2.0
 //
@@ -16,7 +16,7 @@ const CCameraInfo::TMachineInfo CCameraInfo::s_MachineInfo[] =
 	{MachineModelBRelease2MB512,	0,  21,  5},
 	{MachineModelAPlus,		1,  41, 32},
 	{MachineModelBPlus,		1,  41, 32},
-	//{MachineModelZero,		1,  41, 32},	// v1.3 only
+	{MachineModelZero,		1,  41, 32},	// v1.3 only
 	{MachineModelZeroW,		1,  44, 40},
 	{MachineModelZero2W,		2,  40,  0},
 	{MachineModel2B,		1,  41, 32},
